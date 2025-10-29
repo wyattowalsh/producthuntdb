@@ -1,0 +1,197 @@
+<!-- Enhanced webfonts for Frame Python Documentation -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  /* Enhanced typography system for Frame Documentation */
+  :root {
+    /* Typography scale */
+    --font-size-xs: 0.75rem;    /* 12px */
+    --font-size-sm: 0.875rem;   /* 14px */
+    --font-size-base: 1rem;     /* 16px */
+    --font-size-lg: 1.125rem;   /* 18px */
+    --font-size-xl: 1.25rem;    /* 20px */
+    --font-size-2xl: 1.5rem;    /* 24px */
+    --font-size-3xl: 1.875rem;  /* 30px */
+    --font-size-4xl: 2.25rem;   /* 36px */
+    --font-size-5xl: 3rem;      /* 48px */
+    
+    /* Line heights */
+    --line-height-tight: 1.25;
+    --line-height-snug: 1.375;
+    --line-height-normal: 1.5;
+    --line-height-relaxed: 1.625;
+    --line-height-loose: 2;
+    
+    /* Letter spacing */
+    --letter-spacing-tighter: -0.05em;
+    --letter-spacing-tight: -0.025em;
+    --letter-spacing-normal: 0;
+    --letter-spacing-wide: 0.025em;
+    --letter-spacing-wider: 0.05em;
+    --letter-spacing-widest: 0.1em;
+    
+    /* Font families */
+    --font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "JetBrains Mono", "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+    
+    /* Font weights */
+    --font-weight-light: 300;
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    --font-weight-extrabold: 800;
+  }
+  
+  /* Apply enhanced typography */
+  html {
+    font-family: var(--font-body);
+    font-feature-settings: "liga" 1, "kern" 1, "frac" 1, "tnum" 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Headings enhancement */
+  h1, .h1 {
+    font-family: var(--font-display);
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    letter-spacing: var(--letter-spacing-tight);
+  }
+  
+  h2, .h2 {
+    font-family: var(--font-display);
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    letter-spacing: var(--letter-spacing-tight);
+  }
+  
+  h3, .h3 {
+    font-family: var(--font-display);
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-snug);
+  }
+  
+  h4, .h4 {
+    font-family: var(--font-display);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-snug);
+  }
+  
+  h5, .h5 {
+    font-family: var(--font-display);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-normal);
+  }
+  
+  h6, .h6 {
+    font-family: var(--font-display);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-normal);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-wide);
+  }
+  
+  /* Body text enhancement */
+  p, .text-body {
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-relaxed);
+    font-weight: var(--font-weight-normal);
+  }
+  
+  /* Lead text */
+  .lead {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-light);
+    line-height: var(--line-height-relaxed);
+    color: var(--frame-text-secondary);
+  }
+  
+  /* Small text */
+  small, .text-sm {
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+  }
+  
+  /* Monospace text */
+  code, pre, .text-mono {
+    font-family: var(--font-mono);
+    font-feature-settings: "liga" 0, "kern" 1;
+  }
+  
+  /* Link enhancement */
+  a {
+    font-weight: var(--font-weight-medium);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+  }
+  
+  /* List enhancement */
+  ul, ol {
+    line-height: var(--line-height-relaxed);
+  }
+  
+  /* Table text */
+  table {
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+  }
+  
+  th {
+    font-weight: var(--font-weight-semibold);
+  }
+  
+  /* Form elements */
+  input, textarea, select {
+    font-family: var(--font-body);
+    font-size: var(--font-size-sm);
+  }
+  
+  /* Button text */
+  button, .btn {
+    font-family: var(--font-body);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--letter-spacing-wide);
+  }
+  
+  /* Responsive typography */
+  @media (max-width: 768px) {
+    :root {
+      --font-size-4xl: 2rem;      /* 32px on mobile */
+      --font-size-3xl: 1.5rem;    /* 24px on mobile */
+      --font-size-2xl: 1.25rem;   /* 20px on mobile */
+    }
+  }
+  
+  /* Dark mode typography adjustments */
+  @media (prefers-color-scheme: dark) {
+    html {
+      -webkit-font-smoothing: auto;
+      -moz-osx-font-smoothing: auto;
+    }
+  }
+  
+  /* Print typography */
+  @media print {
+    html {
+      font-size: 12pt;
+      line-height: 1.4;
+    }
+    
+    h1 { font-size: 18pt; }
+    h2 { font-size: 16pt; }
+    h3 { font-size: 14pt; }
+    h4, h5, h6 { font-size: 12pt; }
+  }
+</style>

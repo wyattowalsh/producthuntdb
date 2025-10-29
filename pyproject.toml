@@ -1,0 +1,234 @@
+# ----------------------------
+# Build system
+# ----------------------------
+[build-system]
+requires      = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+# ----------------------------
+# Project metadata
+# ----------------------------
+[project]
+name            = "producthuntdb"
+version         = "0.1.0"
+description     = "Product Hunt GraphQL API data sink with SQLite storage and Kaggle dataset management"
+readme          = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Wyatt Walsh", email = "wyattowalsh@gmail.com" },
+]
+license   = { text = "MIT" }
+keywords  = ["product-hunt", "graphql", "api", "data-pipeline", "kaggle", "sqlite"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "alembic>=1.14.0",
+    "httpx>=0.28.1",
+    "kaggle>=1.7.4.5",
+    "loguru>=0.7.3",
+    "nest-asyncio>=1.6.0",
+    "pandas>=2.2.3",
+    "pydantic>=2.12.3",
+    "pydantic-settings>=2.11.0",
+    "python-dateutil>=2.9.0",
+    "python-dotenv>=1.2.1",
+    "rich>=14.0.1",
+    "sqlalchemy>=2.0.36",
+    "sqlmodel>=0.0.27",
+    "tenacity>=9.1.2",
+    "tqdm>=4.67.1",
+    "typer>=0.20.0",
+]
+
+[project.scripts]
+producthuntdb = "producthuntdb.cli:main"
+
+[dependency-groups]
+docs = [
+    "autoclasstoc>=1.7.0",
+    "autodoc-pydantic>=2.2.0",
+    "linkify-it-py>=2.0.3",
+    "myst-parser>=4.0.1",
+    "notfound>=1.0.2",
+    "releases>=2.1.1",
+    "shibuya>=2025.10.21",
+    "sphinx>=8.2.3",
+    "sphinx-autobuild>=2025.8.25",
+    "sphinx-autodoc-typehints>=3.5.2",
+    "sphinx-autodoc2>=0.4.2",
+    "sphinx-click>=6.1.0",
+    "sphinx-copybutton>=0.5.2",
+    "sphinx-design>=0.6.1",
+    "sphinx-git>=11.0.0",
+    "sphinx-hoverxref>=1.4.2",
+    "sphinx-iconify>=0.2.1",
+    "sphinx-jsonschema>=1.19.1",
+    "sphinx-sitemap>=2.9.0",
+    "sphinx-tabs>=3.4.7",
+    "sphinx-togglebutton>=0.3.2",
+    "sphinx-treeview>=1.1.1",
+    "sphinxcontrib-drawio>=0.0.17",
+    "sphinxcontrib-httpdomain>=1.8.1",
+    "sphinxcontrib-mermaid>=1.0.0",
+    "sphinxcontrib-openapi>=0.8.4",
+    "sphinxemoji>=0.3.1",
+]
+notebook = [
+    "ipykernel>=7.1.0",
+    "ipython-sql>=0.5.0",
+    "ipywidgets>=8.1.7",
+    "jupyter-contrib-nbextensions>=0.7.0",
+    "jupyter-nbextensions-configurator>=0.6.4",
+    "jupyterlab>=4.4.10",
+    "jupyterlab-git>=0.51.2",
+    "jupyterlab-github>=4.0.0",
+    "jupyterlab-lsp>=5.2.0",
+    "nbconvert>=7.16.6",
+    "nbdime>=4.0.2",
+    "python-lsp-server[all]>=1.7.0",
+]
+quality = [
+    "mypy>=1.18.2",
+    "pre-commit>=4.3.0",
+    "pylint>=4.0.2",
+    "ruff>=0.14.2",
+]
+test = [
+    "hypothesis>=6.142.4",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=0.25.2",
+    "pytest-benchmark>=5.1.0",
+    "pytest-cov>=7.0.0",
+    "pytest-emoji>=0.2.0",
+    "pytest-html>=4.1.1",
+    "pytest-icdiff>=0.9",
+    "pytest-instafail>=0.5.0",
+    "pytest-mock>=3.15.1",
+    "pytest-sugar>=1.1.1",
+    "pytest-timeout>=2.4.0",
+    "pytest-xdist>=3.8.0",
+]
+
+# ----------------------------
+# pytest config (from pytest.ini)
+# ----------------------------
+[tool.pytest.ini_options]
+minversion        = "8.0"
+python_files      = ["test_*.py"]
+python_classes    = ["Test*"]
+python_functions  = ["test_*"]
+testpaths         = ["tests"]
+
+markers = [
+  "unit: Unit tests",
+  "integration: Integration tests",
+  "e2e: End-to-end tests",
+  "slow: Slow-running tests",
+  "asyncio: Tests using async/await",
+]
+
+# pytest CLI defaults
+addopts = "--import-mode=importlib --verbose --strict-markers --cov=producthuntdb --cov-report=html --cov-report=term-missing --cov-report=xml --cov-branch --cov-fail-under=88 --emoji --instafail --tb=short"
+
+# asyncio & warnings
+asyncio_mode = "auto"
+filterwarnings = [
+  "ignore::DeprecationWarning",
+  "ignore::PendingDeprecationWarning",
+]
+
+# logging / live output
+log_cli             = false
+log_cli_level       = "INFO"
+log_cli_format      = "%(asctime)s [%(levelname)8s] %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+
+# timeout / hang prevention
+timeout        = 300
+timeout_method = "thread"
+
+# note: xdist parallelism (`-n auto`) can be added ad-hoc in CI
+
+# ----------------------------
+# coverage.py config (.coveragerc -> pyproject)
+# ----------------------------
+[tool.coverage.run]
+branch = true
+source = ["producthuntdb"]
+
+[tool.coverage.report]
+fail_under   = 90
+show_missing = true
+skip_empty   = true
+precision    = 1
+
+[tool.coverage.html]
+directory = "logs/htmlcov"
+title     = "ProductHuntDB Coverage Report"
+
+[tool.coverage.xml]
+output = "logs/coverage.xml"
+
+# ----------------------------
+# Ruff (lint + format)
+# ----------------------------
+[tool.ruff]
+line-length    = 100
+target-version = "py311"
+src            = ["producthuntdb", "tests"]
+
+[tool.ruff.lint]
+extend-select = [
+  "B",    # flake8-bugbear: likely bugs
+  "I",    # isort: import order
+  "UP",   # pyupgrade: modernize syntax
+  "SIM",  # flake8-simplify
+]
+ignore = [
+  "E203", # whitespace before ':' (Black/formatter conflict pattern)
+]
+
+[tool.ruff.format]
+docstring-code-format = true
+quote-style           = "preserve"
+indent-style          = "space"
+
+# ----------------------------
+# mypy (static typing w/ pydantic plugin)
+# ----------------------------
+[tool.mypy]
+python_version            = "3.11"
+plugins                   = ["pydantic.mypy"]
+pretty                    = true
+show_error_codes          = true
+warn_unused_ignores       = true
+warn_redundant_casts      = true
+warn_unused_configs       = true
+no_implicit_optional      = true
+disallow_untyped_defs     = true
+disallow_incomplete_defs  = true
+strict_equality           = true
+
+# Example override if tests are looser-typed (uncomment if useful):
+# [[tool.mypy.overrides]]
+# module = ["tests.*"]
+# ignore_missing_imports = true
+# disallow_untyped_defs   = false
+
+# ----------------------------
+# pylint (lightweight gate)
+# ----------------------------
+[tool.pylint.MASTER]
+py-version = "3.11"
+
+# ----------------------------
+# uv integration
+# ----------------------------
+# Let uv know this is a packaged project, and nudge it toward Python 3.11.
+[tool.uv]
+package = true

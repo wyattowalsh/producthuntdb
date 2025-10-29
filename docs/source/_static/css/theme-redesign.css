@@ -1,0 +1,417 @@
+/* 
+===============================================================================
+ProductHuntDB - Modern Theme Redesign
+Light & Dark Mode Color System
+===============================================================================
+*/
+
+/* =================== LIGHT MODE COLOR PALETTE =================== */
+:root {
+  /* Primary Brand - Product Hunt Orange */
+  --color-primary-50: #fff7ed;
+  --color-primary-100: #ffedd5;
+  --color-primary-200: #fed7aa;
+  --color-primary-300: #fdba74;
+  --color-primary-400: #fb923c;
+  --color-primary-500: #f97316;  /* Main orange */
+  --color-primary-600: #ea580c;  /* Product Hunt orange */
+  --color-primary-700: #c2410c;
+  --color-primary-800: #9a3412;
+  --color-primary-900: #7c2d12;
+
+  /* Neutral Grays - Light Mode */
+  --color-neutral-50: #fafafa;
+  --color-neutral-100: #f5f5f5;
+  --color-neutral-200: #e5e5e5;
+  --color-neutral-300: #d4d4d4;
+  --color-neutral-400: #a3a3a3;
+  --color-neutral-500: #737373;
+  --color-neutral-600: #525252;
+  --color-neutral-700: #404040;
+  --color-neutral-800: #262626;
+  --color-neutral-900: #171717;
+
+  /* Semantic Colors */
+  --color-success: #10b981;
+  --color-success-light: #d1fae5;
+  --color-warning: #f59e0b;
+  --color-warning-light: #fef3c7;
+  --color-error: #ef4444;
+  --color-error-light: #fee2e2;
+  --color-info: #3b82f6;
+  --color-info-light: #dbeafe;
+
+  /* Light Mode Theme Mappings */
+  --bg-primary: #ffffff;
+  --bg-secondary: var(--color-neutral-50);
+  --bg-tertiary: var(--color-neutral-100);
+  --bg-elevated: #ffffff;
+  --bg-navbar: linear-gradient(135deg, #ffffff 0%, var(--color-neutral-50) 100%);
+  
+  --text-primary: var(--color-neutral-900);
+  --text-secondary: var(--color-neutral-700);
+  --text-tertiary: var(--color-neutral-500);
+  --text-inverse: #ffffff;
+  
+  --border-primary: var(--color-neutral-200);
+  --border-secondary: var(--color-neutral-300);
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  
+  /* Accent */
+  --accent-primary: var(--color-primary-600);
+  --accent-hover: var(--color-primary-700);
+  --accent-light: var(--color-primary-50);
+}
+
+/* =================== DARK MODE COLOR PALETTE =================== */
+html.dark,
+[data-theme="dark"] {
+  /* Primary Brand - Adjusted for dark backgrounds */
+  --color-primary-50: #7c2d12;
+  --color-primary-100: #9a3412;
+  --color-primary-200: #c2410c;
+  --color-primary-300: #ea580c;
+  --color-primary-400: #f97316;
+  --color-primary-500: #fb923c;
+  --color-primary-600: #ff6b35;  /* Brighter for dark mode */
+  --color-primary-700: #fdba74;
+  --color-primary-800: #fed7aa;
+  --color-primary-900: #ffedd5;
+
+  /* Neutral Grays - Dark Mode */
+  --color-neutral-50: #0a0a0a;
+  --color-neutral-100: #171717;
+  --color-neutral-200: #262626;
+  --color-neutral-300: #404040;
+  --color-neutral-400: #525252;
+  --color-neutral-500: #737373;
+  --color-neutral-600: #a3a3a3;
+  --color-neutral-700: #d4d4d4;
+  --color-neutral-800: #e5e5e5;
+  --color-neutral-900: #fafafa;
+
+  /* Dark Mode Theme Mappings */
+  --bg-primary: #0f1419;
+  --bg-secondary: #1a1f2e;
+  --bg-tertiary: #252b3b;
+  --bg-elevated: #1e2433;
+  --bg-navbar: linear-gradient(135deg, #1a1f2e 0%, #0f1419 100%);
+  
+  --text-primary: #f0f0f0;
+  --text-secondary: #b8b8b8;
+  --text-tertiary: #8a8a8a;
+  --text-inverse: #0f1419;
+  
+  --border-primary: #2d3748;
+  --border-secondary: #3d4758;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+  
+  /* Accent */
+  --accent-primary: var(--color-primary-600);
+  --accent-hover: var(--color-primary-500);
+  --accent-light: rgba(255, 107, 53, 0.1);
+}
+
+/* =================== NAVBAR REDESIGN =================== */
+
+/* Main navbar container */
+.sy-head {
+  background: var(--bg-navbar) !important;
+  border-bottom: 1px solid var(--border-primary) !important;
+  box-shadow: var(--shadow-sm) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* Logo and brand section */
+.sy-head-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  padding: 0.5rem 0 !important;
+  text-decoration: none !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Enlarged logo */
+.sy-head-brand img {
+  height: 42px !important;
+  width: auto !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1)) !important;
+  transition: transform 0.3s ease !important;
+}
+
+html.dark .sy-head-brand img,
+[data-theme="dark"] .sy-head-brand img {
+  filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.1)) !important;
+}
+
+.sy-head-brand:hover img {
+  transform: scale(1.05) !important;
+}
+
+/* Site title styling */
+.sy-head-brand strong {
+  display: inline-block !important;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  color: var(--text-primary) !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  background: none !important;
+  background-image: none !important;
+  -webkit-background-clip: border-box !important;
+  background-clip: border-box !important;
+  letter-spacing: -0.03em !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  transition: color 0.2s ease !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.sy-head-brand:hover strong {
+  color: var(--accent-primary) !important;
+  -webkit-text-fill-color: var(--accent-primary) !important;
+}
+
+/* Responsive title - only hide on very small screens */
+@media (max-width: 640px) {
+  .sy-head-brand strong {
+    display: none !important;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  .sy-head-brand strong {
+    font-size: 1.25rem !important;
+    display: inline-block !important;
+  }
+}
+
+/* =================== NAV BUTTONS & ICONS FIX =================== */
+
+/* Theme toggle button */
+.sy-head .theme-switch,
+.sy-head button {
+  color: var(--text-primary) !important;
+  background: transparent !important;
+  border: 1px solid var(--border-primary) !important;
+  padding: 0.5rem !important;
+  border-radius: 0.5rem !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.sy-head .theme-switch:hover,
+.sy-head button:hover {
+  background: var(--accent-light) !important;
+  border-color: var(--accent-primary) !important;
+  color: var(--accent-primary) !important;
+}
+
+/* Icon styling */
+.sy-head .theme-icon,
+.sy-head button i,
+.sy-head button .i-lucide {
+  color: var(--text-primary) !important;
+  opacity: 0.8 !important;
+  transition: all 0.2s ease !important;
+  font-size: 1.25rem !important;
+}
+
+.sy-head .theme-switch:hover .theme-icon,
+.sy-head button:hover i,
+.sy-head button:hover .i-lucide {
+  color: var(--accent-primary) !important;
+  opacity: 1 !important;
+}
+
+/* GitHub icon */
+.sy-head a[href*="github"] {
+  color: var(--text-primary) !important;
+  opacity: 0.8 !important;
+  transition: all 0.2s ease !important;
+  padding: 0.5rem !important;
+  border-radius: 0.5rem !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.sy-head a[href*="github"]:hover {
+  color: var(--accent-primary) !important;
+  opacity: 1 !important;
+  background: var(--accent-light) !important;
+}
+
+/* Hamburger menu button */
+.sy-head .js-menu {
+  color: var(--text-primary) !important;
+  padding: 0.5rem !important;
+  border-radius: 0.5rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.sy-head .js-menu:hover {
+  background: var(--accent-light) !important;
+}
+
+.hamburger span {
+  background-color: var(--text-primary) !important;
+  transition: all 0.2s ease !important;
+}
+
+.sy-head .js-menu:hover .hamburger span {
+  background-color: var(--accent-primary) !important;
+}
+
+/* =================== NAV LINKS STYLING =================== */
+
+.sy-head nav a {
+  color: var(--text-secondary) !important;
+  font-weight: 500 !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 0.5rem !important;
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+}
+
+.sy-head nav a:hover {
+  color: var(--text-primary) !important;
+  background: var(--accent-light) !important;
+}
+
+.sy-head nav a.current {
+  color: var(--accent-primary) !important;
+  background: var(--accent-light) !important;
+  font-weight: 600 !important;
+}
+
+/* =================== SEARCH BAR STYLING =================== */
+
+.sy-head input[type="search"],
+.sy-head .search-input {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-primary) !important;
+  color: var(--text-primary) !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 0.5rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.sy-head input[type="search"]:focus,
+.sy-head .search-input:focus {
+  outline: none !important;
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 3px var(--accent-light) !important;
+}
+
+.sy-head input[type="search"]::placeholder {
+  color: var(--text-tertiary) !important;
+}
+
+/* =================== BODY & BACKGROUND =================== */
+
+body {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  transition: background-color 0.3s ease, color 0.3s ease !important;
+}
+
+/* Main content area */
+.sy-article,
+.sy-content {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Sidebar */
+.sy-sidebar {
+  background: var(--bg-secondary) !important;
+  border-right: 1px solid var(--border-primary) !important;
+}
+
+/* Cards and elevated surfaces */
+.sd-card {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-primary) !important;
+  box-shadow: var(--shadow-sm) !important;
+  transition: all 0.2s ease !important;
+}
+
+.sd-card:hover {
+  box-shadow: var(--shadow-md) !important;
+  border-color: var(--accent-primary) !important;
+}
+
+/* =================== CODE BLOCKS =================== */
+
+pre,
+code {
+  background: var(--bg-tertiary) !important;
+  border: 1px solid var(--border-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Inline code */
+code:not(pre code) {
+  background: var(--bg-tertiary) !important;
+  color: var(--accent-primary) !important;
+  padding: 0.125rem 0.375rem !important;
+  border-radius: 0.25rem !important;
+  font-size: 0.875em !important;
+}
+
+/* =================== LINKS =================== */
+
+a {
+  color: var(--accent-primary) !important;
+  text-decoration: none !important;
+  transition: color 0.2s ease !important;
+}
+
+a:hover {
+  color: var(--accent-hover) !important;
+  text-decoration: underline !important;
+}
+
+/* =================== TABLES =================== */
+
+table {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-primary) !important;
+}
+
+th {
+  background: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+}
+
+td {
+  border-color: var(--border-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+tr:hover {
+  background: var(--bg-secondary) !important;
+}
+
+/* =================== SMOOTH TRANSITIONS =================== */
+
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}

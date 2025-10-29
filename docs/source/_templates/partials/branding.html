@@ -1,0 +1,15 @@
+{# Custom branding with logo and site title #}
+<a class="sy-head-brand" href="{{ pathto(root_doc) }}">
+  {%- if theme_light_logo or theme_dark_logo %}
+  <div class="sy-head-logo">
+    {%- if theme_light_logo %}
+    <img class="only-light" src="{{ pathto('_static/' + theme_light_logo, 1) }}" alt="{{ docstitle }}">
+    {%- endif %}
+    {%- if theme_dark_logo %}
+    <img class="only-dark" src="{{ pathto('_static/' + theme_dark_logo, 1) }}" alt="{{ docstitle }}">
+    {%- endif %}
+  </div>
+  {%- endif %}
+  {# Add site title next to logo #}
+  <span class="sy-head-title">Frame</span>
+</a>
