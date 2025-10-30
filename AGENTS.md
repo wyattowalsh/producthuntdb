@@ -2,6 +2,19 @@
 
 Product Hunt GraphQL API data sink with SQLite storage and Kaggle dataset management.
 
+## ⚠️ CRITICAL: Package Manager
+
+**This project uses `uv` exclusively. NEVER use `pip`, `python`, or `pytest` directly.**
+
+- ❌ WRONG: `pip install`, `python script.py`, `pytest tests/`
+- ✅ RIGHT: `uv add <package>`, `uv run python script.py`, `uv run pytest tests/`
+
+See [Package Manager](#package-manager) section for complete details.
+
+## Overview
+
+ProductHuntDB syncs Product Hunt API data to SQLite and exports to Kaggle datasets. Uses `uv` for Python package management, Typer for CLI, and Pydantic for config validation.
+
 ## Quickstart
 
 ```bash
@@ -23,26 +36,31 @@ uv run producthuntdb init
 uv run producthuntdb --help
 ```
 
-**Available commands**: `sync`, `export`, `publish`, `status`, `verify`, `init`, `migrate`, `upgrade`, `downgrade`, `migration-history`
+**Key commands**: `sync`, `export`, `publish`, `status`, `verify`, `init`, `migrate`, `upgrade`, `downgrade`, `migration-history`
 
 ## Build & Test
 
 ### Testing
 
+**ALWAYS use `uv run` prefix for all test commands.**
+
 ```bash
 # Full test suite with 88% coverage minimum
-make test-cov
+make test-cov                  # Uses uv internally
 
 # Quick test (skips slow I/O tests)
-make test
+make test                      # Uses uv internally
 
-# Specific test markers
+# Specific test markers (ALWAYS prefix with 'uv run')
 uv run pytest -m unit          # Unit tests only
 uv run pytest -m integration   # Integration tests
-uv run pytest -m e2e          # End-to-end tests
+uv run pytest -m e2e           # End-to-end tests
 
 # Parallel execution (faster)
 uv run pytest -n auto tests/
+
+# ❌ WRONG: pytest tests/
+# ✅ RIGHT: uv run pytest tests/
 ```
 
 **Coverage**: 88% minimum (enforced), reports at `logs/htmlcov/index.html`  
@@ -50,6 +68,8 @@ uv run pytest -n auto tests/
 **CI Parity**: No CI workflows configured yet. Local commands should match CI when added.
 
 ### Database Migrations
+
+**ALWAYS use `uv run` prefix for all migration commands.**
 
 ```bash
 # Create migration after model changes
@@ -63,6 +83,9 @@ uv run producthuntdb downgrade -1
 
 # View migration history
 uv run producthuntdb migration-history
+
+# ❌ WRONG: producthuntdb migrate "description"
+# ✅ RIGHT: uv run producthuntdb migrate "description"
 ```
 
 Migration scripts: `alembic/versions/` | Config: `alembic.ini`
@@ -131,6 +154,8 @@ cp .env.example .env
 
 ## CLI Usage
 
+**CRITICAL: ALWAYS use `uv run` prefix for all CLI commands.**
+
 ```bash
 # Core workflow
 uv run producthuntdb init           # Initialize database
@@ -145,6 +170,9 @@ uv run producthuntdb migrate "description"     # Create migration
 uv run producthuntdb upgrade head              # Apply migrations
 uv run producthuntdb downgrade -1              # Rollback
 uv run producthuntdb migration-history         # View history
+
+# ❌ WRONG: producthuntdb sync
+# ✅ RIGHT: uv run producthuntdb sync
 ```
 
 Entry point: `producthuntdb.cli:main` | Full help: `uv run producthuntdb --help`
@@ -164,7 +192,6 @@ producthuntdb/
 
 **Key modules**: `cli.py` (Typer CLI), `config.py` (Pydantic Settings), `io.py` (API/DB/Kaggle), `models.py` (SQLModel), `pipeline.py` (data sync), `utils.py` (retry/rate limiting)
 
-
 ## Package Manager
 
 This project uses **`uv`** exclusively ([docs](https://docs.astral.sh/uv/), observed: 2025-10-30).
@@ -175,12 +202,19 @@ uv sync --group docs                 # Install with specific group
 uv sync --all-groups                 # Install everything
 uv add <package>                     # Add new dependency
 uv run <command>                     # Run in virtual environment
+uv run python <script.py>            # Run Python scripts
+uv run pytest <test_file>            # Run tests
 ```
 
-**Do NOT use `pip` directly.** Always use `uv` for package operations.
+**CRITICAL: ALWAYS use `uv` for ALL Python operations.**
+
+- ❌ **NEVER use**: `pip install`, `pip uninstall`, `python -m pip`, `python script.py`, `pytest`
+- ✅ **ALWAYS use**: `uv add`, `uv remove`, `uv run python script.py`, `uv run pytest`
+- ❌ **NEVER activate venv manually** and run commands directly
+- ✅ **ALWAYS prefix with** `uv run` or use `uv sync` to manage environment
 
 **Dependency groups** (optional): `docs`, `notebook`, `quality`, `test` (see `pyproject.toml`)  
-**Virtual environment**: `.venv/` (managed by uv, activate with `source .venv/bin/activate` or use `uv run`)
+**Virtual environment**: `.venv/` (managed by uv automatically, DO NOT activate manually)
 
 ## Development Workflow
 
@@ -193,6 +227,8 @@ uv run <command>                     # Run in virtual environment
 
 ### Quick Health Check
 
+**CRITICAL: ALL commands must use `uv run` prefix.**
+
 ```bash
 # Verify environment setup
 uv sync && uv run python -c "import producthuntdb; print('✓')"
@@ -201,6 +237,9 @@ uv run pytest -m unit tests/ && echo "✓ Tests"
 make lint && echo "✓ Lint"
 uv run mypy producthuntdb/ && echo "✓ Types"
 make docs && echo "✓ Docs"
+
+# ❌ WRONG: python -c "import producthuntdb"
+# ✅ RIGHT: uv run python -c "import producthuntdb"
 ```
 
 All checks must pass before submitting pull requests.
@@ -229,15 +268,39 @@ uv sync && uv run python -c "import producthuntdb; print('OK')"
 
 **Status**: No CI workflows configured yet.
 
-**When adding CI**, ensure local commands match CI exactly:
+**When adding CI**, ensure local commands match CI exactly. Recommended structure:
 
 ```yaml
-# Example .github/workflows/ci.yml
-- run: uv sync --all-groups
-- run: make test-cov
-- run: make lint
-- run: uv run mypy producthuntdb/
-- run: make docs
+# .github/workflows/ci.yml (example)
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+      - name: Install dependencies
+        run: uv sync --all-groups
+      - name: Run tests
+        run: make test-cov
+      - name: Lint
+        run: make lint
+      - name: Type check
+        run: uv run mypy producthuntdb/
+      - name: Build docs
+        run: make docs
+```
+
+**Local verification before push**:
+
+```bash
+# Match CI commands exactly
+uv sync --all-groups && make test-cov && make lint && uv run mypy producthuntdb/ && make docs
 ```
 
 ## References
@@ -250,4 +313,3 @@ uv sync && uv run python -c "import producthuntdb; print('OK')"
 - [AGENTS.md specification](https://agents.md) (observed: 2025-10-30)
 - [uv documentation](https://docs.astral.sh/uv/) (observed: 2025-10-30)
 - [pytest documentation](https://docs.pytest.org/) (observed: 2025-10-30)
-

@@ -571,45 +571,54 @@ uv run sphinx-autobuild source _build/html
 
 ---
 
-## 📓 Kaggle Notebook
+## 📓 Kaggle Notebook - Production Workflow
 
-The project includes a comprehensive, production-ready Kaggle notebook (`notebooks/ProductHuntDB Notebook.ipynb`) with:
+**`notebooks/ProductHuntDB Notebook.ipynb`** is a production-ready Kaggle notebook designed for both initial data extraction and automated daily updates via Kaggle's scheduling feature.
 
-- **Beautiful styled banner** with custom CSS
-- **Step-by-step workflow** using CLI commands
-- **Data analysis & visualizations** with pandas and seaborn
-- **Automatic export & publishing** to Kaggle datasets
-- **Complete documentation** and troubleshooting guide
+### ✨ Production Features
 
-### Features
+✅ **Two-Phase Operation** - Full refresh for initial extraction, incremental for daily updates  
+✅ **Kaggle Cron Ready** - Optimized for scheduled runs (~10 min/day)  
+✅ **Smart Installation** - Auto-detects Kaggle environment  
+✅ **CLI-Based Workflow** - Reliable, tested commands  
+✅ **Data Analysis & Viz** - Built-in SQL queries and charts  
+✅ **Secure Credentials** - Kaggle Secrets integration  
+✅ **Auto-Publishing** - Updates Kaggle dataset automatically  
 
-✅ **One-command setup** - Installs package and configures environment  
-✅ **CLI-based workflow** - Uses `producthuntdb` CLI for all operations  
-✅ **Data exploration** - SQL queries, charts, and statistical analysis  
-✅ **Kaggle Secrets integration** - Secure credential management  
-✅ **Scheduling support** - Ready for automated updates  
+### 🚀 Production Setup
 
-### Using the Notebook
+**Initial Extraction (Run Once):**
 
 1. **Upload** `notebooks/ProductHuntDB Notebook.ipynb` to Kaggle
 2. **Configure Secrets** in Notebook Settings → Add-ons → Secrets:
-   - `PRODUCTHUNT_TOKEN` (required)
-   - `KAGGLE_USERNAME`, `KAGGLE_KEY`, `KAGGLE_DATASET_SLUG` (optional, for publishing)
-3. **Run all cells** to install, sync, analyze, and publish
-4. **Schedule** the notebook (Notebook → Schedule) for automatic updates
+   - `PRODUCTHUNT_TOKEN` (required) - Get from [api.producthunt.com](https://api.producthunt.com/v2/oauth/applications)
+   - `KAGGLE_USERNAME`, `KAGGLE_KEY`, `KAGGLE_DATASET_SLUG` (optional, for auto-publishing)
+3. **Modify cell 9** to use: `!producthuntdb sync --full-refresh`
+4. **Run all cells** - Initial extraction takes 2-4 hours
+5. **Verify** - Check database status and exported CSVs
 
-### Quick Start Commands
+**Scheduled Daily Updates:**
 
-The notebook uses these CLI commands:
+1. **Revert cell 9** to default: `!producthuntdb sync` (no flags)
+2. **Enable Scheduling** - Notebook → Schedule Run → Daily
+3. **Done!** - Notebook runs automatically, updates take ~10 minutes
 
-```bash
-producthuntdb init              # Initialize database
-producthuntdb verify            # Test authentication
-producthuntdb sync --max-pages 10   # Sync data (limited)
-producthuntdb status            # View statistics
-producthuntdb export            # Export to CSV
-producthuntdb publish           # Publish to Kaggle
-```
+### ⚙️ How It Works
+
+| Phase | Command | Duration | Purpose |
+|-------|---------|----------|---------|
+| **Initial** | `sync --full-refresh` | 2-4 hours | Get all historical data |
+| **Daily** | `sync` | 3-5 minutes | Fetch new data since last run |
+| **Export** | `export` | 1-2 minutes | Generate CSV files |
+| **Publish** | `publish` | 1-2 minutes | Update Kaggle dataset |
+
+The notebook automatically:
+
+- Detects Kaggle environment
+- Loads credentials from Kaggle Secrets
+- Uses incremental sync with 5-minute safety margin
+- Handles API rate limits with retry logic
+- Publishes dataset updates (if credentials configured)
 
 ---
 

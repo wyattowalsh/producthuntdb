@@ -1,6 +1,12 @@
 # ProductHuntDB - Documentation
 
-**Note**: This file contains documentation-specific instructions. See [root AGENTS.md](../AGENTS.md) for project-wide setup and conventions.
+**Parent**: See [root AGENTS.md](../AGENTS.md) for project-wide setup and conventions.
+
+**Scope**: Documentation-specific build, preview, and publishing instructions.
+
+## Overview
+
+Sphinx-based documentation with MyST Markdown, Shibuya theme, and live-reload development server. Build with `make docs`, develop with `make htmllive`.
 
 ## Documentation Build Commands
 

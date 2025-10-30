@@ -3,10 +3,19 @@
 This module provides centralized configuration using Pydantic Settings,
 supporting both environment variables and Kaggle Secrets.
 
+Environment Profiles:
+    - DEVELOPMENT: Verbose logging, single concurrency, safe defaults
+    - PRODUCTION: Conservative settings, tracing enabled, optimized for stability
+    - TESTING: In-memory database, minimal logging, fast execution
+
 Example:
-    >>> from producthuntdb.config import settings
+    >>> from producthuntdb.config import settings, Environment
     >>> print(settings.graphql_endpoint)
     https://api.producthunt.com/v2/api/graphql
+    >>> print(settings.environment)
+    Environment.DEVELOPMENT
+    >>> if settings.is_production:
+    ...     print("Running in production mode")
 """
 
 import os
@@ -50,6 +59,22 @@ class CommentsOrder(StrEnum):
     VOTES_COUNT  = "VOTES_COUNT"
 
 
+class Environment(StrEnum):
+    """Runtime environment with specific behavior profiles.
+    
+    Attributes:
+        DEVELOPMENT: Verbose logging, single concurrency, safe defaults
+        PRODUCTION: Conservative settings, tracing enabled, optimized for stability
+        TESTING: In-memory database, minimal logging, fast execution
+        STAGING: Pre-production validation environment
+    """
+
+    DEVELOPMENT = "development"
+    PRODUCTION = "production"
+    TESTING = "testing"
+    STAGING = "staging"
+
+
 class Settings(BaseSettings):
     """Application settings with environment variable support.
 
@@ -71,6 +96,12 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
+    )
+
+    # Environment Configuration
+    environment: Environment = Field(
+        default=Environment.DEVELOPMENT,
+        description="Runtime environment (development, production, testing, staging)",
     )
 
     # API Configuration
@@ -140,6 +171,30 @@ class Settings(BaseSettings):
         description="Flag indicating if running in Kaggle environment",
     )
 
+    # Logging Configuration
+    log_level: str = Field(
+        default="INFO",
+        description="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+    )
+    log_to_file: bool = Field(
+        default=True,
+        description="Enable file logging in addition to console",
+    )
+    log_json: bool = Field(
+        default=False,
+        description="Output logs in JSON format (recommended for production)",
+    )
+
+    # Observability (OpenTelemetry)
+    enable_tracing: bool = Field(
+        default=False,
+        description="Enable OpenTelemetry distributed tracing",
+    )
+    otlp_endpoint: Optional[str] = Field(
+        default=None,
+        description="OpenTelemetry OTLP endpoint for traces (e.g., http://localhost:4317)",
+    )
+
     @field_validator("data_dir", mode="before")
     @classmethod
     def expand_data_dir(cls, v: str | Path) -> Path:
@@ -167,6 +222,55 @@ class Settings(BaseSettings):
             raise ValueError("Product Hunt token must be at least 10 characters")
         return v
 
+    @model_validator(mode="after")
+    def apply_environment_profile(self) -> "Settings":
+        """Apply environment-specific defaults.
+        
+        This validator runs after all fields are set and adjusts settings
+        based on the runtime environment to ensure appropriate behavior.
+        
+        Profiles:
+            - PRODUCTION: Conservative concurrency (max 5), INFO logging, tracing enabled
+            - DEVELOPMENT: Single concurrency, DEBUG logging, tracing disabled
+            - TESTING: In-memory database, ERROR logging, no file logging, no tracing
+            - STAGING: Balanced settings between development and production
+        
+        Returns:
+            Modified settings instance with environment-specific adjustments
+        """
+        if self.environment == Environment.PRODUCTION:
+            # Production: Conservative and observable
+            self.max_concurrency = min(self.max_concurrency, 5)
+            if self.log_level == "DEBUG":  # Don't override explicit DEBUG
+                self.log_level = "INFO"
+            self.log_json = True  # Structured logs for production
+            self.enable_tracing = True
+            
+        elif self.environment == Environment.DEVELOPMENT:
+            # Development: Verbose and safe
+            self.max_concurrency = 1  # Single-threaded for easier debugging
+            self.log_level = "DEBUG"
+            self.log_json = False  # Human-readable logs
+            self.enable_tracing = False
+            
+        elif self.environment == Environment.TESTING:
+            # Testing: Fast and minimal
+            self.database_path = Path(":memory:")
+            self.max_concurrency = 1
+            self.log_level = "ERROR"  # Quiet tests
+            self.log_to_file = False
+            self.log_json = False
+            self.enable_tracing = False
+            
+        elif self.environment == Environment.STAGING:
+            # Staging: Production-like but with more logging
+            self.max_concurrency = min(self.max_concurrency, 3)
+            self.log_level = "INFO"
+            self.log_json = True
+            self.enable_tracing = True
+        
+        return self
+
     @property
     def safety_timedelta(self) -> timedelta:
         """Get safety margin as timedelta."""
@@ -183,6 +287,35 @@ class Settings(BaseSettings):
     def database_url(self) -> str:
         """Get SQLAlchemy database URL."""
         return f"sqlite:///{self.database_path}"
+
+    @property
+    def is_production(self) -> bool:
+        """Check if running in production environment."""
+        return self.environment == Environment.PRODUCTION
+
+    @property
+    def is_development(self) -> bool:
+        """Check if running in development environment."""
+        return self.environment == Environment.DEVELOPMENT
+
+    @property
+    def is_testing(self) -> bool:
+        """Check if running in testing environment."""
+        return self.environment == Environment.TESTING
+
+    @property
+    def is_staging(self) -> bool:
+        """Check if running in staging environment."""
+        return self.environment == Environment.STAGING
+
+    @property
+    def has_kaggle_credentials(self) -> bool:
+        """Check if Kaggle credentials are fully configured."""
+        return (
+            self.kaggle_username is not None
+            and self.kaggle_key is not None
+            and self.kaggle_dataset_slug is not None
+        )
 
     def redact_token(self, token: Optional[str] = None) -> str:
         """Redact sensitive token for logging.
@@ -216,7 +349,7 @@ def load_kaggle_secrets() -> dict[str, str]:
         Only works in Kaggle notebook environment.
     """
     try:
-        from kaggle_secrets import UserSecretsClient  # type: ignore[import-untyped]
+        from kaggle_secrets import UserSecretsClient  # type: ignore[import-not-found]
 
         client = UserSecretsClient()
         return {
@@ -243,7 +376,7 @@ def get_settings() -> Settings:
             if value:
                 os.environ[key] = value
 
-    settings_instance = Settings()  # type: ignore[call-arg]
+    settings_instance = Settings()
     settings_instance.configure_kaggle_env()
     return settings_instance
 

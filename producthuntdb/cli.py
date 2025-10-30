@@ -780,6 +780,281 @@ def migration_history(
         raise typer.Exit(code=1)
 
 
+@app.command()
+def health_check(
+    verbose: bool = typer.Option(
+        False,
+        "--verbose",
+        "-v",
+        help="Enable verbose logging",
+    ),
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Output results in JSON format",
+    ),
+) -> None:
+    """Run health checks on database and API connectivity.
+    
+    This command verifies:
+    - Database file exists and is readable
+    - Database schema is initialized
+    - API authentication is valid
+    - API is reachable and responsive
+    
+    Examples:
+        # Basic health check with human-readable output
+        $ producthuntdb health-check
+        
+        # JSON output for monitoring systems
+        $ producthuntdb health-check --json
+        
+        # Verbose output with detailed diagnostics
+        $ producthuntdb health-check --verbose
+    """
+    import json
+    import time
+    from datetime import datetime
+    
+    setup_logging(verbose)
+    
+    if not json_output:
+        console.print("🏥 [bold cyan]Running Health Checks[/bold cyan]\n")
+    
+    # Track all check results
+    checks = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "status": "healthy",  # Will be updated to "degraded" or "unhealthy"
+        "checks": {
+            "database_file": {"status": "unknown", "message": ""},
+            "database_connection": {"status": "unknown", "message": ""},
+            "database_tables": {"status": "unknown", "message": ""},
+            "api_authentication": {"status": "unknown", "message": ""},
+            "api_connectivity": {"status": "unknown", "message": ""},
+        }
+    }
+    
+    # Check 1: Database file exists
+    if not json_output:
+        console.print("🗄️  Checking database file...")
+    
+    try:
+        db_path = settings.database_path
+        if db_path.exists() and db_path.is_file():
+            size_mb = db_path.stat().st_size / (1024 * 1024)
+            checks["checks"]["database_file"] = {
+                "status": "pass",
+                "message": f"Database file exists ({size_mb:.2f} MB)",
+                "path": str(db_path),
+                "size_bytes": db_path.stat().st_size,
+            }
+            if not json_output:
+                console.print(f"   ✅ Database file exists: {db_path} ({size_mb:.2f} MB)\n")
+        else:
+            checks["checks"]["database_file"] = {
+                "status": "fail",
+                "message": "Database file not found",
+                "path": str(db_path),
+            }
+            checks["status"] = "unhealthy"
+            if not json_output:
+                console.print(f"   ❌ Database file not found: {db_path}\n")
+    except Exception as e:
+        checks["checks"]["database_file"] = {
+            "status": "fail",
+            "message": f"Error checking database file: {str(e)}",
+        }
+        checks["status"] = "unhealthy"
+        if not json_output:
+            console.print(f"   ❌ Error: {e}\n")
+    
+    # Check 2: Database connection
+    if not json_output:
+        console.print("🔌 Checking database connection...")
+    
+    try:
+        db = DatabaseManager()
+        # Try to execute a simple query
+        with db.engine.connect() as conn:
+            result = conn.execute(db.text("SELECT 1"))
+            result.fetchone()
+        
+        checks["checks"]["database_connection"] = {
+            "status": "pass",
+            "message": "Database connection successful",
+        }
+        if not json_output:
+            console.print("   ✅ Database connection successful\n")
+    except Exception as e:
+        checks["checks"]["database_connection"] = {
+            "status": "fail",
+            "message": f"Database connection failed: {str(e)}",
+        }
+        checks["status"] = "unhealthy"
+        if not json_output:
+            console.print(f"   ❌ Database connection failed: {e}\n")
+    
+    # Check 3: Database tables exist
+    if not json_output:
+        console.print("📋 Checking database tables...")
+    
+    try:
+        db = DatabaseManager()
+        with db.engine.connect() as conn:
+            # Check if main tables exist
+            result = conn.execute(db.text(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name IN "
+                "('postrow', 'userrow', 'topicrow', 'voterow', 'commentrow')"
+            ))
+            tables = [row[0] for row in result.fetchall()]
+            
+            expected_tables = ['postrow', 'userrow', 'topicrow']
+            missing_tables = [t for t in expected_tables if t not in tables]
+            
+            if not missing_tables:
+                checks["checks"]["database_tables"] = {
+                    "status": "pass",
+                    "message": f"All required tables exist ({len(tables)} tables found)",
+                    "tables": tables,
+                }
+                if not json_output:
+                    console.print(f"   ✅ All required tables exist ({len(tables)} tables)\n")
+            else:
+                checks["checks"]["database_tables"] = {
+                    "status": "fail",
+                    "message": f"Missing tables: {', '.join(missing_tables)}",
+                    "found_tables": tables,
+                    "missing_tables": missing_tables,
+                }
+                checks["status"] = "degraded"
+                if not json_output:
+                    console.print(f"   ⚠️  Missing tables: {', '.join(missing_tables)}\n")
+    except Exception as e:
+        checks["checks"]["database_tables"] = {
+            "status": "fail",
+            "message": f"Error checking tables: {str(e)}",
+        }
+        checks["status"] = "unhealthy"
+        if not json_output:
+            console.print(f"   ❌ Error checking tables: {e}\n")
+    
+    # Check 4: API authentication
+    if not json_output:
+        console.print("🔑 Checking API authentication...")
+    
+    try:
+        # Check if token is configured
+        if not settings.producthunt_token:
+            checks["checks"]["api_authentication"] = {
+                "status": "fail",
+                "message": "Product Hunt API token not configured",
+            }
+            checks["status"] = "unhealthy"
+            if not json_output:
+                console.print("   ❌ Product Hunt API token not configured\n")
+        else:
+            checks["checks"]["api_authentication"] = {
+                "status": "pass",
+                "message": "API token configured",
+                "token_length": len(settings.producthunt_token),
+            }
+            if not json_output:
+                console.print("   ✅ API token configured\n")
+    except Exception as e:
+        checks["checks"]["api_authentication"] = {
+            "status": "fail",
+            "message": f"Error checking authentication: {str(e)}",
+        }
+        checks["status"] = "unhealthy"
+        if not json_output:
+            console.print(f"   ❌ Error: {e}\n")
+    
+    # Check 5: API connectivity
+    if not json_output:
+        console.print("🌐 Checking API connectivity...")
+    
+    try:
+        start_time = time.time()
+        
+        async def check_api():
+            from producthuntdb.io import AsyncGraphQLClient
+            async with AsyncGraphQLClient() as client:
+                viewer = await client.fetch_viewer()
+                return viewer
+        
+        viewer = run_async(check_api())
+        
+        elapsed_ms = (time.time() - start_time) * 1000
+        
+        if viewer and "user" in viewer:
+            checks["checks"]["api_connectivity"] = {
+                "status": "pass",
+                "message": f"API responding (latency: {elapsed_ms:.0f}ms)",
+                "response_time_ms": round(elapsed_ms, 2),
+                "viewer_username": viewer["user"].get("username", "unknown"),
+            }
+            if not json_output:
+                console.print(f"   ✅ API responding ({elapsed_ms:.0f}ms)\n")
+                console.print(f"   👤 Authenticated as: {viewer['user'].get('username', 'unknown')}\n")
+        else:
+            checks["checks"]["api_connectivity"] = {
+                "status": "fail",
+                "message": "API returned unexpected response",
+                "response_time_ms": round(elapsed_ms, 2),
+            }
+            checks["status"] = "degraded"
+            if not json_output:
+                console.print("   ⚠️  API returned unexpected response\n")
+    except Exception as e:
+        checks["checks"]["api_connectivity"] = {
+            "status": "fail",
+            "message": f"API connectivity failed: {str(e)}",
+        }
+        checks["status"] = "unhealthy"
+        if not json_output:
+            console.print(f"   ❌ API connectivity failed: {e}\n")
+    
+    # Output results
+    if json_output:
+        # JSON output for monitoring systems
+        print(json.dumps(checks, indent=2))
+    else:
+        # Human-readable summary
+        console.print("─" * 50)
+        
+        status_emoji = {
+            "healthy": "✅",
+            "degraded": "⚠️",
+            "unhealthy": "❌",
+        }
+        
+        status_color = {
+            "healthy": "green",
+            "degraded": "yellow",
+            "unhealthy": "red",
+        }
+        
+        emoji = status_emoji.get(checks["status"], "❓")
+        color = status_color.get(checks["status"], "white")
+        
+        console.print(f"\n{emoji} [bold {color}]Overall Status: {checks['status'].upper()}[/bold {color}]")
+        
+        # Count pass/fail
+        passed = sum(1 for c in checks["checks"].values() if c["status"] == "pass")
+        failed = sum(1 for c in checks["checks"].values() if c["status"] == "fail")
+        total = len(checks["checks"])
+        
+        console.print(f"\n📊 Checks: {passed}/{total} passed, {failed}/{total} failed")
+    
+    # Exit with appropriate code
+    if checks["status"] == "unhealthy":
+        raise typer.Exit(code=1)
+    elif checks["status"] == "degraded":
+        raise typer.Exit(code=2)
+    else:
+        raise typer.Exit(code=0)
+
+
 def main() -> None:
     """Main entry point for CLI."""
     app()

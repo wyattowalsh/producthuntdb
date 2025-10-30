@@ -17,6 +17,7 @@ Key choices:
 from __future__ import annotations
 
 from datetime import date
+import importlib.util
 import os
 from pathlib import Path
 import sys
@@ -34,6 +35,9 @@ DEFAULT_BRANCH  = os.getenv("DOCS_BRANCH", "main")
 
 # Make producthuntdb package importable
 sys.path.insert(0, str(REPO_ROOT))
+
+# Provide sane defaults so autodoc can import settings without a real token.
+os.environ.setdefault("PRODUCTHUNT_TOKEN", "producthuntdb-docs-placeholder")
 
 # --------------------------------------------------------------------------------------
 # Project information
@@ -59,6 +63,7 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.coverage",
     "sphinx.ext.extlinks",
+    "sphinx.ext.autosectionlabel",
 
     # Markdown
     "myst_parser",
@@ -85,6 +90,9 @@ extensions = [
     "sphinx_sitemap",
 ]
 
+if importlib.util.find_spec("sphinx_docsearch") is not None:
+    extensions.append("sphinx_docsearch")
+
 templates_path   = ["_templates"]
 exclude_patterns = [
     "_build",
@@ -102,7 +110,7 @@ source_suffix = {
 }
 language = "en"
 default_role = "py:obj"  # short refs resolve to Python objects
-nitpicky = False          # Set to True for stricter checking
+nitpicky = True          # Fail on broken references
 
 # --------------------------------------------------------------------------------------
 # Theme: shibuya
@@ -154,8 +162,12 @@ html_theme_options = {
     # Social & repo
     "github_url"   : f"https://github.com/{ORG_SLUG}/{PROJECT_SLUG}",
 
-    # Color theme - using orange/red to match Product Hunt branding
-    "accent_color": "orange",
+    # Color theme - using Product Hunt brand palette
+    "accent_color": "#ff5c5c",
+    "color_mode": {
+        "default": "auto",
+        "disable_switch": False,
+    },
     
     # Dark code blocks for better contrast
     "dark_code": True,
@@ -168,10 +180,10 @@ html_theme_options = {
 
     # Navbar links - using proper emoji unicode for icons
     "nav_links": [
-        {"title": "🚀 Getting Started", "url": "index#quick-start"},
-        {"title": "📊 Data Coverage", "url": "index#data-coverage"},
-        {"title": "🔧 CLI Reference", "url": "index#cli-reference"},
-        {"title": "🛠️ Tools", "url": "tools/index"},
+        {"title": "🚀 Start", "url": "index#start-here"},
+        {"title": "🧭 Guides", "url": "guides/index"},
+        {"title": "📚 Reference", "url": "reference/index"},
+        {"title": "🏗️ Architecture", "url": "concepts/index"},
         {"title": "📝 Changelog", "url": "changelog"},
     ],
 
@@ -210,6 +222,9 @@ myst_enable_extensions = {
 }
 myst_heading_anchors = 3  # auto-anchors for h1..h3
 myst_links_external_new_tab = True
+
+autosectionlabel_prefix_document = True
+autosectionlabel_maxdepth = 2
 
 # --------------------------------------------------------------------------------------
 # Autodoc / autosummary / napoleon / typehints
@@ -466,3 +481,17 @@ extlinks = {
 
 html_baseurl = os.getenv("DOCS_BASE_URL", "https://wyattowalsh.github.io/producthuntdb/")
 
+# --------------------------------------------------------------------------------------
+# DocSearch configuration
+# --------------------------------------------------------------------------------------
+
+docsearch_app_id = os.getenv("DOCSEARCH_APP_ID", "")
+docsearch_api_key = os.getenv("DOCSEARCH_API_KEY", "")
+docsearch_index_name = os.getenv("DOCSEARCH_INDEX_NAME", "")
+
+if docsearch_app_id and docsearch_api_key and docsearch_index_name:
+    docsearch_options = {
+        "appId": docsearch_app_id,
+        "apiKey": docsearch_api_key,
+        "indexName": docsearch_index_name,
+    }

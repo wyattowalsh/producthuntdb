@@ -1,10 +1,10 @@
 # ProductHuntDB - Testing
 
-**Note**: This file contains testing-specific instructions. See [root AGENTS.md](../AGENTS.md) for project-wide setup and conventions.
+**Parent**: See [root AGENTS.md](../AGENTS.md) for project-wide setup and conventions.
 
-## Test Execution
+**Scope**: Testing-specific execution, fixtures, and coverage requirements.
 
-### Quick Commands
+## Quick Commands
 
 ```bash
 # From project root:
@@ -40,11 +40,9 @@ uv run pytest -n auto tests/
 open logs/htmlcov/index.html
 ```
 
-## Test Structure
+## Test Markers & Organization
 
-### Test Markers
-
-Defined in `pyproject.toml`:
+### Markers (defined in `pyproject.toml`)
 
 - `@pytest.mark.unit` - Fast, isolated unit tests
 - `@pytest.mark.integration` - Tests with external dependencies (DB, API mocks)

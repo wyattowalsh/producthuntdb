@@ -1,26 +1,41 @@
 """Data pipeline orchestration for ProductHuntDB.
 
-This module orchestrates the ETL pipeline:
+This module orchestrates the ETL pipeline with dependency injection:
 1. Extract: Fetch data from Product Hunt GraphQL API
 2. Transform: Parse and validate with Pydantic models
 3. Load: Store in SQLite database with SQLModel
 
 Features:
+- Dependency injection for testability
 - Incremental updates with safety margins
 - Progress tracking and logging
 - Error handling and retry logic
 - Database transaction management
+
+Example:
+    >>> from producthuntdb.pipeline import DataPipeline
+    >>> from producthuntdb.api import AsyncGraphQLClient
+    >>> from producthuntdb.database import DatabaseManager
+    >>> 
+    >>> # Use default implementations
+    >>> pipeline = DataPipeline()
+    >>> 
+    >>> # Or inject custom implementations
+    >>> client = AsyncGraphQLClient(max_concurrency=5)
+    >>> db = DatabaseManager()
+    >>> pipeline = DataPipeline(client=client, db=db)
 """
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
-from loguru import logger
 from pydantic import ValidationError
 from tqdm.asyncio import tqdm  # type: ignore[import-untyped]
 
+from producthuntdb.api import AsyncGraphQLClient
 from producthuntdb.config import PostsOrder, settings
-from producthuntdb.io import AsyncGraphQLClient, DatabaseManager
+from producthuntdb.database import DatabaseManager
+from producthuntdb.logging import logger
 from producthuntdb.models import Collection, Post, Topic
 from producthuntdb.utils import format_iso, parse_datetime
 
@@ -43,14 +58,23 @@ class DataPipeline:
 
     def __init__(
         self,
-        client: Optional[AsyncGraphQLClient] = None,
-        db: Optional[DatabaseManager] = None,
+        client: AsyncGraphQLClient | None = None,
+        db: DatabaseManager | None = None,
     ):
-        """Initialize data pipeline.
+        """Initialize data pipeline with dependency injection.
 
         Args:
-            client: GraphQL client (creates new if None)
-            db: Database manager (creates new if None)
+            client: GraphQL client implementation (creates AsyncGraphQLClient if None)
+            db: Database manager implementation (creates DatabaseManager if None)
+
+        Example:
+            >>> # Use default implementations
+            >>> pipeline = DataPipeline()
+            >>> 
+            >>> # Inject custom implementations for testing
+            >>> mock_client = MockGraphQLClient()
+            >>> mock_db = MockDatabaseManager()
+            >>> pipeline = DataPipeline(client=mock_client, db=mock_db)
         """
         self.client = client or AsyncGraphQLClient()
         self.db     = db or DatabaseManager()
@@ -65,7 +89,7 @@ class DataPipeline:
         self.db.close()
         logger.info("✅ Pipeline closed")
 
-    def _get_safety_cutoff(self, timestamp: Optional[str]) -> Optional[datetime]:
+    def _get_safety_cutoff(self, timestamp: str | None) -> datetime | None:
         """Calculate safety cutoff timestamp for incremental updates.
 
         Args:
@@ -113,7 +137,7 @@ class DataPipeline:
     async def sync_posts(
         self,
         full_refresh: bool = False,
-        max_pages: Optional[int] = None,
+        max_pages: int | None = None,
     ) -> dict[str, int]:
         """Synchronize posts from Product Hunt API.
 
@@ -271,7 +295,7 @@ class DataPipeline:
 
     async def sync_topics(
         self,
-        max_pages: Optional[int] = None,
+        max_pages: int | None = None,
     ) -> dict[str, int]:
         """Synchronize topics from Product Hunt API.
 
@@ -353,7 +377,7 @@ class DataPipeline:
 
     async def sync_collections(
         self,
-        max_pages: Optional[int] = None,
+        max_pages: int | None = None,
     ) -> dict[str, int]:
         """Synchronize collections from Product Hunt API.
 
@@ -461,7 +485,7 @@ class DataPipeline:
     async def sync_all(
         self,
         full_refresh: bool = False,
-        max_pages: Optional[int] = None,
+        max_pages: int | None = None,
     ) -> dict[str, Any]:
         """Synchronize all entities from Product Hunt API.
 
