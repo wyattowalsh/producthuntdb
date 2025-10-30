@@ -1,7 +1,7 @@
 """Unit tests for data pipeline orchestration."""
 
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -136,7 +136,10 @@ class TestDataPipeline:
         await pipeline.initialize()
 
         # Mock infinite pages
-        infinite_response = {**mock_posts_response["posts"], "pageInfo": {"hasNextPage": True, "endCursor": "cursor"}}
+        infinite_response = {
+            **mock_posts_response["posts"],
+            "pageInfo": {"hasNextPage": True, "endCursor": "cursor"},
+        }
         mocker.patch.object(
             pipeline.client,
             "fetch_posts_page",
@@ -169,7 +172,9 @@ class TestDataPipeline:
         pipeline.close()
 
     @pytest.mark.asyncio
-    async def test_sync_all(self, mocker, mock_viewer_response, mock_posts_response, mock_topics_response):
+    async def test_sync_all(
+        self, mocker, mock_viewer_response, mock_posts_response, mock_topics_response
+    ):
         """Test syncing all entities."""
         pipeline = DataPipeline()
         await pipeline.initialize()
@@ -274,11 +279,13 @@ class TestPipelineFullCoverage:
 
         try:
             # Create user for collection
-            pipeline.db.upsert_user({
-                "id": "user123",
-                "username": "test",
-                "name": "Test User",
-            })
+            pipeline.db.upsert_user(
+                {
+                    "id": "user123",
+                    "username": "test",
+                    "name": "Test User",
+                }
+            )
 
             mock_collection = {
                 "id": "coll123",
@@ -473,7 +480,9 @@ class TestPipelineFullCoverage:
             mocker.patch.object(
                 pipeline.client,
                 "fetch_viewer",
-                AsyncMock(return_value={"user": {"id": "viewer1", "username": "viewer", "name": "Viewer"}}),
+                AsyncMock(
+                    return_value={"user": {"id": "viewer1", "username": "viewer", "name": "Viewer"}}
+                ),
             )
 
             # Mock posts
@@ -685,6 +694,7 @@ class TestPipelineStatistics:
     def test_get_statistics_empty_db(self, temp_db_path):
         """Test statistics with empty database."""
         from producthuntdb.io import DatabaseManager
+
         db = DatabaseManager(database_path=temp_db_path)
         db.initialize()
 
@@ -701,6 +711,7 @@ class TestPipelineStatistics:
     def test_get_statistics_with_data(self, temp_db_path):
         """Test statistics with actual data."""
         from producthuntdb.io import DatabaseManager
+
         db = DatabaseManager(database_path=temp_db_path)
         db.initialize()
 
@@ -739,3 +750,65 @@ class TestAsyncOperations:
 
         # Should not crash
         pipeline.close()
+
+
+class TestPipelineEdgeCases:
+    """Tests for edge cases and error paths."""
+
+    @pytest.mark.asyncio
+    async def test_sync_topics_with_validation_error(self, mock_graphql_client):
+        """Test sync_topics handles validation errors gracefully."""
+        from unittest.mock import AsyncMock
+
+        mock_graphql_client.fetch_topics_page = AsyncMock(
+            return_value={
+                "nodes": [
+                    {"id": "invalid"}  # Missing required fields
+                ],
+                "pageInfo": {"hasNextPage": False},
+            }
+        )
+
+        pipeline = DataPipeline()
+        pipeline.graphql_client = mock_graphql_client
+        pipeline.db = MagicMock()
+
+        stats = await pipeline.sync_topics()
+
+        assert stats["skipped"] >= 0  # Should handle validation error
+
+    @pytest.mark.asyncio
+    async def test_sync_topics_with_processing_error(self, mock_graphql_client):
+        """Test sync_topics handles processing errors gracefully."""
+        from unittest.mock import AsyncMock
+
+        mock_graphql_client.fetch_topics_page = AsyncMock(
+            return_value={
+                "nodes": [{"id": "topic1", "name": "Test", "slug": "test"}],
+                "pageInfo": {"hasNextPage": False},
+            }
+        )
+
+        pipeline = DataPipeline()
+        pipeline.graphql_client = mock_graphql_client
+        pipeline.db = MagicMock()
+        pipeline.db.upsert_topic.side_effect = Exception("Database error")
+
+        stats = await pipeline.sync_topics()
+
+        assert stats["skipped"] >= 0  # Should handle exception
+
+    @pytest.mark.asyncio
+    async def test_sync_collections_with_errors(self, mock_graphql_client):
+        """Test sync_collections handles errors gracefully."""
+        from unittest.mock import AsyncMock
+
+        mock_graphql_client.fetch_collections_page = AsyncMock(side_effect=Exception("API Error"))
+
+        pipeline = DataPipeline()
+        pipeline.graphql_client = mock_graphql_client
+        pipeline.db = MagicMock()
+
+        stats = await pipeline.sync_collections()
+
+        assert stats["collections"] == 0

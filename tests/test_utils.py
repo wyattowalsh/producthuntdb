@@ -302,3 +302,30 @@ class TestUtilsCoverage:
         assert result.tzinfo == UTC
         assert result.year == 2024
 
+    def test_parse_datetime_string_without_timezone(self):
+        """Test parse_datetime with ISO string without timezone info."""
+        from producthuntdb.utils import parse_datetime, UTC
+
+        # ISO string without timezone - should be treated as UTC
+        result = parse_datetime("2024-01-15T10:30:00")
+        
+        assert result is not None
+        assert result.tzinfo == UTC
+        assert result.year == 2024
+        assert result.month == 1
+        assert result.day == 15
+
+    def test_build_graphql_query_with_variables(self):
+        """Test build_graphql_query with variables."""
+        from producthuntdb.utils import build_graphql_query
+
+        query = build_graphql_query(
+            "posts",
+            ["id", "name"],
+            {"$first": "Int!", "$after": "String"}
+        )
+        assert "posts" in query
+        assert "$first: Int!" in query
+        assert "$after: String" in query
+        assert "id" in query
+        assert "name" in query

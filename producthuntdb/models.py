@@ -569,6 +569,9 @@ class PostRow(SQLModel, table=True):
         thumbnail_url: Thumbnail URL
         thumbnail_videoUrl: Thumbnail video URL (if video)
         productlinks_json: JSON stringified list of productLinks dicts
+
+    Note:
+        Media items are stored in the MediaRow table with foreign key to post_id.
     """
 
     id: str = Field(primary_key=True)
@@ -594,7 +597,10 @@ class PostRow(SQLModel, table=True):
 
     @classmethod
     def from_pydantic(cls, post: Post) -> "PostRow":
-        """Create PostRow from Pydantic Post model."""
+        """Create PostRow from Pydantic Post model.
+        
+        Note: Media items should be saved separately using MediaRow.from_pydantic()
+        """
         return cls(
             id=post.id,
             userId=post.userId,

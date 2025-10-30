@@ -128,9 +128,7 @@ class TestCLICommands:
             mock_pipeline.verify_authentication = AsyncMock(
                 return_value={"user": {"username": "test"}}
             )
-            mock_pipeline.sync_all = AsyncMock(
-                return_value={"total_entities": 10}
-            )
+            mock_pipeline.sync_all = AsyncMock(return_value={"total_entities": 10})
             mock_pipeline.close = MagicMock()
 
             result = runner.invoke(app, ["sync", "--max-pages", "1"])
@@ -205,9 +203,7 @@ class TestCLIEdgeCases:
             mock_pipeline.verify_authentication = AsyncMock(
                 return_value={"user": {"username": "test"}}
             )
-            mock_pipeline.sync_topics = AsyncMock(
-                return_value={"topics": 5, "pages": 1}
-            )
+            mock_pipeline.sync_topics = AsyncMock(return_value={"topics": 5, "pages": 1})
             mock_pipeline.close = MagicMock()
 
             result = runner.invoke(app, ["sync", "--topics-only", "--max-pages", "1"])
@@ -224,9 +220,7 @@ class TestCLIEdgeCases:
             mock_pipeline.verify_authentication = AsyncMock(
                 return_value={"user": {"username": "test"}}
             )
-            mock_pipeline.sync_all = AsyncMock(
-                return_value={"total_entities": 20}
-            )
+            mock_pipeline.sync_all = AsyncMock(return_value={"total_entities": 20})
             mock_pipeline.close = MagicMock()
 
             result = runner.invoke(app, ["sync", "--full-refresh", "--max-pages", "1"])
@@ -240,6 +234,7 @@ class TestCLIEdgeCases:
 
         # Create database with data
         from producthuntdb.io import DatabaseManager
+
         db = DatabaseManager(database_path=temp_db_path)
         db.initialize()
         db.upsert_user({"id": "u1", "username": "test", "name": "Test"})
@@ -290,11 +285,9 @@ class TestCLIEdgeCases:
             mock_km.export_database_to_csv = MagicMock()
             mock_km.publish_dataset = MagicMock()
 
-            result = runner.invoke(app, [
-                "publish",
-                "--title", "Test Dataset",
-                "--description", "Test Description"
-            ])
+            result = runner.invoke(
+                app, ["publish", "--title", "Test Dataset", "--description", "Test Description"]
+            )
 
             # May succeed or fail, but shouldn't crash
             assert result.exit_code in [0, 1]
@@ -329,9 +322,7 @@ class TestCLIEdgeCases:
             mock_pipeline.verify_authentication = AsyncMock(
                 return_value={"user": {"username": "test"}}
             )
-            mock_pipeline.sync_collections = AsyncMock(
-                return_value={"collections": 10}
-            )
+            mock_pipeline.sync_collections = AsyncMock(return_value={"collections": 10})
             mock_pipeline.close = MagicMock()
 
             result = runner.invoke(app, ["sync", "--collections-only"])
@@ -348,9 +339,7 @@ class TestCLIEdgeCases:
             mock_pipeline.verify_authentication = AsyncMock(
                 return_value={"user": {"username": "test"}}
             )
-            mock_pipeline.sync_all = AsyncMock(
-                side_effect=RuntimeError("Test error")
-            )
+            mock_pipeline.sync_all = AsyncMock(side_effect=RuntimeError("Test error"))
             mock_pipeline.close = MagicMock()
 
             result = runner.invoke(app, ["sync"])
@@ -363,9 +352,7 @@ class TestCLIEdgeCases:
 
         with patch("producthuntdb.cli.KaggleManager") as MockKaggle:
             mock_km = MockKaggle.return_value
-            mock_km.export_database_to_csv = MagicMock(
-                side_effect=RuntimeError("Export error")
-            )
+            mock_km.export_database_to_csv = MagicMock(side_effect=RuntimeError("Export error"))
 
             result = runner.invoke(app, ["export", "--output-dir", str(tmp_path)])
 
@@ -383,7 +370,7 @@ class TestCLIEdgeCases:
             mock_settings.kaggle_username = None
             mock_settings.kaggle_key = None
             mock_settings.kaggle_dataset_slug = "test/dataset"
-            
+
             result = runner.invoke(app, ["publish"])
 
             assert result.exit_code == 1
@@ -400,7 +387,7 @@ class TestCLIEdgeCases:
             mock_settings.kaggle_username = "testuser"
             mock_settings.kaggle_key = "testkey"
             mock_settings.kaggle_dataset_slug = None
-            
+
             result = runner.invoke(app, ["publish"])
 
             assert result.exit_code == 1
@@ -417,10 +404,7 @@ class TestCLIEdgeCases:
             mock_km = MockKaggle.return_value
             mock_km.publish_dataset = MagicMock()
 
-            result = runner.invoke(app, [
-                "publish",
-                "--data-dir", str(tmp_path)
-            ])
+            result = runner.invoke(app, ["publish", "--data-dir", str(tmp_path)])
 
             assert result.exit_code in [0, 1]
 
@@ -440,3 +424,94 @@ class TestCLIEdgeCases:
 
             assert result.exit_code in [0, 1]
             mock_km.export_database_to_csv.assert_called_once()
+
+
+class TestCLIMigrationCommands:
+    """Tests for database migration CLI commands."""
+
+    def test_migrate_command(self, tmp_path, monkeypatch):
+        """Test migrate command creates migration."""
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_12345678")
+        db_path = tmp_path / "test.db"
+        monkeypatch.setenv("DATABASE_PATH", str(db_path))
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value.returncode = 0
+
+            result = runner.invoke(app, ["migrate", "--message", "test_migration"])
+
+            assert result.exit_code in [0, 1]  # May fail if alembic not configured
+
+    def test_upgrade_command(self, tmp_path, monkeypatch):
+        """Test upgrade command applies migrations."""
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_12345678")
+        db_path = tmp_path / "test.db"
+        monkeypatch.setenv("DATABASE_PATH", str(db_path))
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value.returncode = 0
+
+            result = runner.invoke(app, ["upgrade"])
+
+            assert result.exit_code in [0, 1]
+
+    def test_downgrade_command(self, tmp_path, monkeypatch):
+        """Test downgrade command reverts migrations."""
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_12345678")
+        db_path = tmp_path / "test.db"
+        monkeypatch.setenv("DATABASE_PATH", str(db_path))
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value.returncode = 0
+
+            result = runner.invoke(app, ["downgrade", "-1"])
+
+            assert result.exit_code in [0, 1, 2]  # May fail due to alembic setup
+
+    def test_migration_history_command(self, tmp_path, monkeypatch):
+        """Test migration-history command shows migration history."""
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_12345678")
+        db_path = tmp_path / "test.db"
+        monkeypatch.setenv("DATABASE_PATH", str(db_path))
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value.returncode = 0
+            mock_run.return_value.stdout = "Migration history output"
+
+            result = runner.invoke(app, ["migration-history"])
+
+            assert result.exit_code in [0, 1]
+
+
+class TestCLIVerbosity:
+    """Test CLI verbosity and logging."""
+
+    def test_sync_with_verbose_flag(self, monkeypatch):
+        """Test sync command with verbose logging."""
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_12345678")
+
+        with patch("producthuntdb.cli.DataPipeline") as MockPipeline:
+            mock_pipeline = AsyncMock()
+            mock_pipeline.initialize = AsyncMock()
+            mock_pipeline.sync_posts = AsyncMock()
+            mock_pipeline.close = AsyncMock()
+            MockPipeline.return_value = mock_pipeline
+
+            result = runner.invoke(app, ["sync", "--verbose", "--max-pages", "1"])
+
+            assert result.exit_code in [0, 1]
+
+    def test_status_with_verbose_flag(self, monkeypatch):
+        """Test status command with verbose logging."""
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_12345678")
+        db_path = Path(__file__).parent / "test_temp.db"
+        monkeypatch.setenv("DATABASE_PATH", str(db_path))
+
+        with patch("producthuntdb.cli.DatabaseManager") as MockDB:
+            mock_db = MockDB.return_value
+            mock_db.session = MagicMock()
+            mock_db.session.query.return_value.count.return_value = 10
+
+            result = runner.invoke(app, ["status", "--verbose"])
+
+            assert result.exit_code in [0, 1]

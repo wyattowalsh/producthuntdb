@@ -573,19 +573,43 @@ uv run sphinx-autobuild source _build/html
 
 ## 📓 Kaggle Notebook
 
-The project includes a comprehensive Kaggle notebook (`nb.ipynb`) that can be used to:
+The project includes a comprehensive, production-ready Kaggle notebook (`notebooks/ProductHuntDB Notebook.ipynb`) with:
 
-1. Run the full pipeline in Kaggle's environment
-2. Analyze Product Hunt data with pandas
-3. Create visualizations and insights
-4. Publish dataset updates automatically
+- **Beautiful styled banner** with custom CSS
+- **Step-by-step workflow** using CLI commands
+- **Data analysis & visualizations** with pandas and seaborn
+- **Automatic export & publishing** to Kaggle datasets
+- **Complete documentation** and troubleshooting guide
+
+### Features
+
+✅ **One-command setup** - Installs package and configures environment  
+✅ **CLI-based workflow** - Uses `producthuntdb` CLI for all operations  
+✅ **Data exploration** - SQL queries, charts, and statistical analysis  
+✅ **Kaggle Secrets integration** - Secure credential management  
+✅ **Scheduling support** - Ready for automated updates  
 
 ### Using the Notebook
 
-1. Upload `nb.ipynb` to Kaggle
-2. Configure Kaggle Secrets (see [Configuration](#️-configuration))
-3. Run all cells to sync data and publish dataset
-4. Schedule notebook for automatic updates
+1. **Upload** `notebooks/ProductHuntDB Notebook.ipynb` to Kaggle
+2. **Configure Secrets** in Notebook Settings → Add-ons → Secrets:
+   - `PRODUCTHUNT_TOKEN` (required)
+   - `KAGGLE_USERNAME`, `KAGGLE_KEY`, `KAGGLE_DATASET_SLUG` (optional, for publishing)
+3. **Run all cells** to install, sync, analyze, and publish
+4. **Schedule** the notebook (Notebook → Schedule) for automatic updates
+
+### Quick Start Commands
+
+The notebook uses these CLI commands:
+
+```bash
+producthuntdb init              # Initialize database
+producthuntdb verify            # Test authentication
+producthuntdb sync --max-pages 10   # Sync data (limited)
+producthuntdb status            # View statistics
+producthuntdb export            # Export to CSV
+producthuntdb publish           # Publish to Kaggle
+```
 
 ---
 

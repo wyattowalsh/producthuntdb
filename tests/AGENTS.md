@@ -14,7 +14,6 @@ make test-cov
 
 # Fast tests (skip I/O-heavy tests)
 make test
-# or: uv run pytest --ignore=tests/test_io.py tests/
 
 # Specific test types
 uv run pytest -m unit              # Unit tests only
@@ -33,9 +32,8 @@ uv run pytest -n auto tests/
 
 ### Coverage Requirements
 
-- **Minimum**: 88% (enforced by `--cov-fail-under=88` in `pyproject.toml`)
-- **Target**: 90%+ per module
-- **Reports**: HTML coverage at `logs/htmlcov/index.html`
+**Minimum**: 88% (enforced by `--cov-fail-under=88` in `pyproject.toml`)  
+**Reports**: HTML coverage at `logs/htmlcov/index.html`
 
 ```bash
 # View coverage after running tests
@@ -56,25 +54,27 @@ Defined in `pyproject.toml`:
 
 ### File Organization
 
-- **1:1 mapping**: One test file per source module
-  - `producthuntdb/models.py` → `tests/test_models.py`
-  - `producthuntdb/cli.py` → `tests/test_cli.py`
-  
-- **Test file structure**:
-  ```python
-  """Tests for producthuntdb.module_name."""
-  
-  # Test classes group related tests
-  class TestClassName:
-      def test_specific_behavior(self, fixture_name):
-          # Arrange, Act, Assert
-  ```
+**1:1 mapping**: One test file per source module
+
+- `producthuntdb/models.py` → `tests/test_models.py`
+- `producthuntdb/cli.py` → `tests/test_cli.py`
+
+**Test file structure**:
+
+```python
+"""Tests for producthuntdb.module_name."""
+
+# Test classes group related tests
+class TestClassName:
+    def test_specific_behavior(self, fixture_name):
+        # Arrange, Act, Assert
+```
 
 ## Fixtures & Test Data
 
-### Key Fixtures (from conftest.py)
+### Key Fixtures
 
-Available in all tests:
+Available in all tests (from `conftest.py`):
 
 ```python
 # Configuration
@@ -96,96 +96,9 @@ sample_topic: TopicRow               # Example TopicRow instance
 # ... (see conftest.py for full list)
 ```
 
-### Test Data Location
-
-- **Fixtures**: `tests/conftest.py` (437 lines of shared fixtures)
-- **Mock data**: Created dynamically in fixtures (no `tests/data/` directory needed)
-- **Temporary files**: Auto-cleaned via pytest tmpdir and custom fixtures
-
-### Mocking Strategy
-
-- **External APIs**: Always mocked (use `mock_api_client` fixture)
-- **Database**: Real SQLite in-memory or temp files (via `temp_db_path`)
-- **File I/O**: Use pytest's `tmp_path` fixture
-- **Environment variables**: Set in `test_settings` fixture
-
-Example:
-```python
-def test_api_call(mock_api_client):
-    # mock_api_client is pre-configured with sample responses
-    result = await mock_api_client.fetch_posts()
-    assert result is not None
-```
-
-## Pytest Configuration
-
-Configuration in `[tool.pytest.ini_options]` (pyproject.toml):
-
-- **Test discovery**: `test_*.py` files, `Test*` classes, `test_*` functions
-- **Async**: Auto-detected via `asyncio_mode = "auto"`
-- **Timeout**: 300s per test (prevents hangs)
-- **Output**: Verbose with instant failure reporting (`--instafail`), emoji indicators
-- **Coverage**: Branch coverage enabled, 88% minimum
-- **Warnings**: Deprecation warnings ignored
-
-### Useful pytest Options
-
-```bash
-# Show print statements
-uv run pytest -s
-
-# Stop on first failure
-uv run pytest -x
-
-# Verbose output
-uv run pytest -v
-
-# Show slowest tests
-uv run pytest --durations=10
-
-# Re-run failed tests
-uv run pytest --lf
-
-# Run tests in parallel (faster, uses pytest-xdist)
-uv run pytest -n auto tests/
-
-# Watch mode (requires pytest-watch)
-uv run ptw tests/
-```
-
-### Test Parallelization
-
-The project includes `pytest-xdist` for parallel test execution:
-
-```bash
-# Auto-detect CPU cores and parallelize
-uv run pytest -n auto tests/
-
-# Use specific number of workers
-uv run pytest -n 4 tests/
-
-# Parallel with coverage (slower but thorough)
-uv run pytest -n auto --cov=producthuntdb tests/
-```
-
-**Note**: Some tests with shared resources may need `@pytest.mark.serial` to avoid conflicts.
-
-### Property-Based Testing
-
-The project includes `hypothesis` for property-based testing:
-
-```python
-from hypothesis import given
-from hypothesis import strategies as st
-
-@given(st.integers(min_value=1, max_value=100))
-def test_page_size_validation(page_size):
-    """Property test: page_size always validates correctly."""
-    config = Settings(PAGE_SIZE=page_size)
-    assert 1 <= config.PAGE_SIZE <= 100
-```
-
-Use for testing invariants and edge cases automatically.
+**Test data**: Created dynamically in fixtures (no external data files)  
+**Mocking**: External APIs always mocked, database uses real SQLite (temp files)  
+**Cleanup**: Auto-cleaned via pytest tmpdir and custom fixtures
 
 ## Writing New Tests
 
@@ -230,43 +143,59 @@ class TestMyClass:
 1. **One assertion per test** (when possible)
 2. **Descriptive names**: `test_<what>_<when>_<expected>`
 3. **Use fixtures** for setup/teardown
-4. **Mark tests appropriately** (@pytest.mark.unit, etc.)
+4. **Mark tests appropriately** (`@pytest.mark.unit`, etc.)
 5. **Mock external dependencies** (API calls, file I/O)
 6. **Test edge cases** and error conditions
 7. **Keep tests fast** (unit tests < 100ms)
-8. **Clean up resources** (fixtures handle this automatically)
 
-## Coverage Configuration
-
-Coverage settings in `[tool.coverage]` (pyproject.toml):
-
-- **Branch coverage**: Enabled (tracks conditional branches)
-- **Minimum**: 88% (CI gate)
-- **Target**: 90%+ per module
-- **Reports**: HTML (`logs/htmlcov/`), XML (`logs/coverage.xml`), terminal
+## Useful pytest Options
 
 ```bash
-# View detailed coverage
-open logs/htmlcov/index.html
+# Show print statements
+uv run pytest -s
 
-# Check specific module coverage
+# Stop on first failure
+uv run pytest -x
+
+# Verbose output
+uv run pytest -v
+
+# Show slowest tests
+uv run pytest --durations=10
+
+# Re-run failed tests
+uv run pytest --lf
+
+# Specific module coverage
 uv run pytest --cov=producthuntdb.models --cov-report=term-missing tests/test_models.py
 ```
 
-### Test Timeouts
+## Troubleshooting
 
-Tests have 300-second timeout (configured in `pyproject.toml`):
+### Common Issues
 
-```python
-# Override timeout for slow tests
-@pytest.mark.timeout(600)
-def test_slow_operation():
-    pass
+**Database locked errors**:
 
-# Disable timeout for specific test
-@pytest.mark.timeout(0)
-def test_no_timeout():
-    pass
+- Each test gets unique temp DB via `temp_db_path` fixture
+- Automatic cleanup after test completion
+
+**Async test warnings**:
+
+- Mark async tests with `@pytest.mark.asyncio` (auto-detected in this project)
+
+**Coverage not meeting 88%**:
+
+- Check uncovered lines: `logs/htmlcov/index.html`
+- Add tests for missing branches and edge cases
+
+**Import errors in tests**:
+
+```bash
+# Ensure test dependencies installed
+uv sync --group test
+
+# Verify pytest can find producthuntdb
+uv run python -c "import producthuntdb; print('OK')"
 ```
 
 ## CI/CD Integration
@@ -283,33 +212,10 @@ def test_no_timeout():
 
 Local test commands should match CI exactly.
 
-## Troubleshooting
-
-### Common Issues
-
-**Database locked errors**:
-- Each test gets unique temp DB via `temp_db_path` fixture
-- Automatic cleanup after test completion
-
-**Async test warnings**:
-- Mark async tests with `@pytest.mark.asyncio` (auto-detected in this project)
-
-**Coverage not meeting 88%**:
-- Check uncovered lines: `logs/htmlcov/index.html`
-- Add tests for missing branches and edge cases
-
-**Import errors in tests**:
-```bash
-# Ensure test dependencies installed
-uv sync --group test
-
-# Verify pytest can find producthuntdb
-uv run python -c "import producthuntdb; print('OK')"
-```
-
 ## References
 
 - [Root AGENTS.md](../AGENTS.md) - Project-wide conventions
 - [conftest.py](conftest.py) - All test fixtures and configuration
-- [pytest documentation](https://docs.pytest.org/) (observed: 2025-10-29)
-- [pytest-asyncio](https://pytest-asyncio.readthedocs.io/) (observed: 2025-10-29)
+- [pyproject.toml](../pyproject.toml) - Test configuration (`[tool.pytest.ini_options]`, `[tool.coverage]`)
+- [pytest documentation](https://docs.pytest.org/) (observed: 2025-10-30)
+- [pytest-asyncio](https://pytest-asyncio.readthedocs.io/) (observed: 2025-10-30)

@@ -34,6 +34,7 @@ from producthuntdb.config import PostsOrder, settings
 from producthuntdb.models import (
     CrawlState,
     MakerPostLink,
+    MediaRow,
     PostRow,
     PostTopicLink,
     TopicRow,
@@ -632,12 +633,17 @@ class DatabaseManager:
 
         # Convert JSON fields
         if "thumbnail" in processed and processed["thumbnail"]:
-            processed["thumbnail_url"] = json.dumps(processed["thumbnail"])
+            thumb = processed["thumbnail"]
+            if isinstance(thumb, dict):
+                processed["thumbnail_type"] = thumb.get("type")
+                processed["thumbnail_url"] = thumb.get("url")
+                processed["thumbnail_videoUrl"] = thumb.get("videoUrl")
             del processed["thumbnail"]
 
-        if "media" in processed and processed["media"]:
-            processed["media_json"] = json.dumps(processed["media"])
-            del processed["media"]
+        # Handle media separately - will be saved to MediaRow table
+        media_items = None
+        if "media" in processed:
+            media_items = processed.pop("media", None)
 
         if "productLinks" in processed and processed["productLinks"]:
             processed["productlinks_json"] = json.dumps(processed["productLinks"])
@@ -658,6 +664,26 @@ class DatabaseManager:
             self.session.add(post_row)
 
         self.session.commit()
+        
+        # Handle media items - save to MediaRow table
+        if media_items and isinstance(media_items, list):
+            # Delete existing media for this post
+            self.session.query(MediaRow).filter(MediaRow.post_id == post_id).delete()
+            
+            # Add new media entries
+            for idx, media_dict in enumerate(media_items):
+                if isinstance(media_dict, dict):
+                    media_row = MediaRow(
+                        post_id=post_id,
+                        type=media_dict.get("type", ""),
+                        url=media_dict.get("url", ""),
+                        videoUrl=media_dict.get("videoUrl"),
+                        order_index=idx,
+                    )
+                    self.session.add(media_row)
+            
+            self.session.commit()
+        
         return post_row
 
     def upsert_topic(self, topic_data: dict[str, Any]) -> TopicRow:

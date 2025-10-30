@@ -565,3 +565,142 @@ class TestModelsCoverage:
         assert collection.id == "collection123"
         assert collection.followersCount == 250
 
+    def test_post_topics_extraction_dict(self):
+        """Test Post _extract_topics_nodes with dict."""
+        post_data = {
+            "id": "post1",
+            "userId": "user1",
+            "name": "Test Post",
+            "tagline": "Test",
+            "url": "https://test.com",
+            "commentsCount": 0,
+            "votesCount": 0,
+            "reviewsRating": 0.0,
+            "reviewsCount": 0,
+            "isCollected": False,
+            "isVoted": False,
+            "user": {"id": "user1", "username": "testuser", "name": "Test User"},
+            "makers": [],
+            "topics": {"nodes": [{"id": "topic1", "name": "Tech", "slug": "tech"}]},
+        }
+        post = Post(**post_data)
+        assert post.topics is not None
+        assert len(post.topics) == 1
+        assert post.topics[0].name == "Tech"
+
+    def test_post_topics_extraction_list(self):
+        """Test Post _extract_topics_nodes with list."""
+        post_data = {
+            "id": "post1",
+            "userId": "user1",
+            "name": "Test Post",
+            "tagline": "Test",
+            "url": "https://test.com",
+            "commentsCount": 0,
+            "votesCount": 0,
+            "reviewsRating": 0.0,
+            "reviewsCount": 0,
+            "isCollected": False,
+            "isVoted": False,
+            "user": {"id": "user1", "username": "testuser", "name": "Test User"},
+            "makers": [],
+            "topics": [{"id": "topic1", "name": "Tech", "slug": "tech"}],
+        }
+        post = Post(**post_data)
+        assert post.topics is not None
+        assert len(post.topics) == 1
+
+    def test_post_thumbnail_media_object(self):
+        """Test Post _coerce_thumbnail with Media object."""
+        from producthuntdb.models import Media
+
+        media = Media(type="image", url="https://test.com/img.jpg")
+        post_data = {
+            "id": "post1",
+            "userId": "user1",
+            "name": "Test Post",
+            "tagline": "Test",
+            "url": "https://test.com",
+            "commentsCount": 0,
+            "votesCount": 0,
+            "reviewsRating": 0.0,
+            "reviewsCount": 0,
+            "isCollected": False,
+            "isVoted": False,
+            "user": {"id": "user1", "username": "testuser", "name": "Test User"},
+            "makers": [],
+            "thumbnail": media,
+        }
+        post = Post(**post_data)
+        assert post.thumbnail is not None
+        assert post.thumbnail.url == "https://test.com/img.jpg"
+
+    def test_post_thumbnail_dict(self):
+        """Test Post _coerce_thumbnail with dict."""
+        post_data = {
+            "id": "post1",
+            "userId": "user1",
+            "name": "Test Post",
+            "tagline": "Test",
+            "url": "https://test.com",
+            "commentsCount": 0,
+            "votesCount": 0,
+            "reviewsRating": 0.0,
+            "reviewsCount": 0,
+            "isCollected": False,
+            "isVoted": False,
+            "user": {"id": "user1", "username": "testuser", "name": "Test User"},
+            "makers": [],
+            "thumbnail": {"type": "image", "url": "https://test.com/img.jpg"},
+        }
+        post = Post(**post_data)
+        assert post.thumbnail is not None
+        assert post.thumbnail.url == "https://test.com/img.jpg"
+
+    def test_post_media_list_coercion(self):
+        """Test Post _coerce_media with list of dicts."""
+        post_data = {
+            "id": "post1",
+            "userId": "user1",
+            "name": "Test Post",
+            "tagline": "Test",
+            "url": "https://test.com",
+            "commentsCount": 0,
+            "votesCount": 0,
+            "reviewsRating": 0.0,
+            "reviewsCount": 0,
+            "isCollected": False,
+            "isVoted": False,
+            "user": {"id": "user1", "username": "testuser", "name": "Test User"},
+            "makers": [],
+            "media": [
+                {"type": "image", "url": "https://test.com/img1.jpg"},
+                {"type": "image", "url": "https://test.com/img2.jpg"},
+            ],
+        }
+        post = Post(**post_data)
+        assert post.media is not None
+        assert len(post.media) == 2
+        assert post.media[0].url == "https://test.com/img1.jpg"
+
+    def test_post_media_none(self):
+        """Test Post _coerce_media with None."""
+        post_data = {
+            "id": "post1",
+            "userId": "user1",
+            "name": "Test Post",
+            "tagline": "Test",
+            "url": "https://test.com",
+            "commentsCount": 0,
+            "votesCount": 0,
+            "reviewsRating": 0.0,
+            "reviewsCount": 0,
+            "isCollected": False,
+            "isVoted": False,
+            "user": {"id": "user1", "username": "testuser", "name": "Test User"},
+            "makers": [],
+            "media": None,
+        }
+        post = Post(**post_data)
+        assert post.media is None
+

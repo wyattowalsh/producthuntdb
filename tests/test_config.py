@@ -203,9 +203,7 @@ class TestSettingsIntegration:
         """Test loading settings from .env file."""
         env_file = tmp_path / ".env"
         env_file.write_text(
-            "PRODUCTHUNT_TOKEN=env_file_token_12345\n"
-            "MAX_CONCURRENCY=7\n"
-            "PAGE_SIZE=75\n"
+            "PRODUCTHUNT_TOKEN=env_file_token_12345\nMAX_CONCURRENCY=7\nPAGE_SIZE=75\n"
         )
 
         monkeypatch.chdir(tmp_path)
@@ -256,7 +254,7 @@ class TestConfigCoverage:
         """Test token redaction with empty token (falls back to default)."""
         monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_12345678")
         settings = Settings()  # type: ignore[call-arg]
-        
+
         # Empty string is falsy, so it uses the default token from settings
         redacted = settings.redact_token("")
         assert "..." in redacted  # Should redact the default token
@@ -265,7 +263,7 @@ class TestConfigCoverage:
         """Test token redaction with None token (uses default from settings)."""
         monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_12345678")
         settings = Settings()  # type: ignore[call-arg]
-        
+
         # When None is passed, it should use the default token from settings
         redacted = settings.redact_token(None)
         assert "..." in redacted  # Should redact the default token
@@ -273,13 +271,14 @@ class TestConfigCoverage:
     def test_configure_kaggle_env_with_credentials(self, monkeypatch):
         """Test configuring Kaggle environment variables."""
         import os
+
         monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_12345678")
         monkeypatch.setenv("KAGGLE_USERNAME", "testuser")
         monkeypatch.setenv("KAGGLE_KEY", "testkey123")
-        
+
         settings = Settings()  # type: ignore[call-arg]
         settings.configure_kaggle_env()
-        
+
         assert os.environ.get("KAGGLE_USERNAME") == "testuser"
         assert os.environ.get("KAGGLE_KEY") == "testkey123"
 
@@ -288,17 +287,82 @@ class TestConfigCoverage:
         monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_12345678")
         monkeypatch.delenv("KAGGLE_USERNAME", raising=False)
         monkeypatch.delenv("KAGGLE_KEY", raising=False)
-        
+
         settings = Settings()  # type: ignore[call-arg]
         settings.configure_kaggle_env()
-        
+
         # Should not raise an error
 
     def test_redact_short_token(self, monkeypatch):
         """Test token redaction with short token (<=12 chars)."""
         monkeypatch.setenv("PRODUCTHUNT_TOKEN", "short12345")  # exactly 10 chars (minimum)
         settings = Settings()  # type: ignore[call-arg]
-        
+
         redacted = settings.redact_token()
         assert redacted == "***"
 
+    def test_get_settings_with_kaggle_secrets(self, monkeypatch):
+        """Test get_settings with Kaggle secrets available."""
+        from importlib import reload
+        from unittest.mock import MagicMock
+
+        # Mock environment to simulate Kaggle environment
+        monkeypatch.setenv("KAGGLE_KERNEL_RUN_TYPE", "Interactive")
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "kaggle_token_123")
+
+        # Mock the kaggle_secrets module
+        mock_client = MagicMock()
+        mock_client.get_secret.side_effect = lambda x: {
+            "PRODUCTHUNT_TOKEN": "kaggle_token_123",
+            "KAGGLE_USERNAME": "kaggle_user",
+            "KAGGLE_KEY": "kaggle_key_456",
+        }.get(x, "")
+
+        monkeypatch.setattr(
+            "producthuntdb.config.UserSecretsClient", lambda: mock_client, raising=False
+        )
+
+        # Reload the module to pick up the new mocked secrets
+        from producthuntdb import config
+
+        reload(config)
+
+        settings = config.get_settings()
+        assert settings.producthunt_token == "kaggle_token_123"
+
+    def test_settings_is_kaggle_with_kernel_name(self, monkeypatch):
+        """Test is_kaggle detection with KAGGLE_KERNEL_RUN_TYPE."""
+        monkeypatch.setenv("KAGGLE_KERNEL_RUN_TYPE", "Interactive")
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_12345678")
+
+        settings = Settings()  # type: ignore[call-arg]
+        assert settings.is_kaggle is True
+
+    def test_redact_token_with_exactly_12_chars(self, monkeypatch):
+        """Test token redaction with exactly 12 character token."""
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "exactly12chr")
+        settings = Settings()  # type: ignore[call-arg]
+
+        redacted = settings.redact_token()
+        assert redacted == "***"
+
+    def test_redact_token_with_13_chars(self, monkeypatch):
+        """Test token redaction with 13 character token."""
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "thirteenchars")
+        settings = Settings()  # type: ignore[call-arg]
+
+        redacted = settings.redact_token()
+        assert redacted == "thirteen...hars"
+        assert len(redacted) == 15  # 8 + 3 + 4
+
+    def test_configure_kaggle_env_sets_environment(self, monkeypatch):
+        """Test that configure_kaggle_env sets environment variables."""
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_12345678")
+        monkeypatch.setenv("KAGGLE_USERNAME", "testuser")
+        monkeypatch.setenv("KAGGLE_KEY", "testkey123")
+
+        settings = Settings()  # type: ignore[call-arg]
+        settings.configure_kaggle_env()
+
+        assert os.environ.get("KAGGLE_USERNAME") == "testuser"
+        assert os.environ.get("KAGGLE_KEY") == "testkey123"
