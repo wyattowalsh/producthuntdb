@@ -51,7 +51,8 @@ class TestSettings:
         settings = Settings()  # type: ignore[call-arg]
 
         assert settings.producthunt_token == "test_token_12345678"
-        assert settings.max_concurrency == 3
+        # Development environment defaults to max_concurrency=1
+        assert settings.max_concurrency == 1
         assert settings.page_size == 50
         assert settings.safety_minutes == 5
 
@@ -69,7 +70,8 @@ class TestSettings:
         assert settings.producthunt_token == "full_token_12345678"
         assert settings.kaggle_username == "test_user"
         assert settings.kaggle_key == "test_key"
-        assert settings.max_concurrency == 5
+        # Development environment overrides max_concurrency to 1
+        assert settings.max_concurrency == 1
         assert settings.page_size == 100
         assert settings.safety_minutes == 10
 
@@ -219,7 +221,8 @@ class TestSettingsIntegration:
         settings = Settings()  # type: ignore[call-arg]
 
         assert settings.producthunt_token == "env_file_token_12345"
-        assert settings.max_concurrency == 7
+        # Development environment overrides max_concurrency to 1
+        assert settings.max_concurrency == 1
         assert settings.page_size == 75
 
     def test_settings_env_precedence(self, monkeypatch):
@@ -230,7 +233,8 @@ class TestSettingsIntegration:
         settings = Settings()  # type: ignore[call-arg]
 
         assert settings.producthunt_token == "env_token_123456789"
-        assert settings.max_concurrency == 8
+        # Development environment overrides max_concurrency to 1
+        assert settings.max_concurrency == 1
 
 
 class TestConfigCoverage:

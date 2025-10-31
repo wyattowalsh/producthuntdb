@@ -28,6 +28,19 @@ Consistent docs are easier to navigate, translate, and maintain. Adopt the follo
 - Prefer tables for option matrices and feature comparisons.
 - For cross-references, use explicit links (`{doc}`) or `:mod:` for Python modules.
 
+## Sphinx Design Components
+
+- Prefer `{card}` blocks inside `{grid}` containers when displaying multiple choices.
+- Keep `grid` layouts under four columns for readability on mobile.
+- Use `dropdown` or `tabs` for advanced/optional content instead of long bullet lists.
+- Avoid nesting more than two interactive components (for example, tabs inside accordions).
+
+## Metadata & Search
+
+- Update `docsearch_options` in `conf.py` when Algolia credentials change.
+- Add new environment variables to the [Automation & CI Runbook](../guides/automation).
+- Keep `extlinks` up to date so badges and issue links resolve correctly.
+
 ## Autodoc Hygiene
 
 - Ensure public classes and functions include docstrings—they render automatically in the API reference.

@@ -11,16 +11,13 @@ Example:
     >>> from producthuntdb.repository import Repository
     >>> from producthuntdb.models import PostRow, UserRow
     >>> from sqlmodel import Session
-    >>> 
     >>> # Create type-safe repositories
     >>> post_repo = Repository[PostRow](session, PostRow)
     >>> user_repo = Repository[UserRow](session, UserRow)
-    >>> 
     >>> # Type checker knows these return PostRow | None
     >>> post = post_repo.get("post-123")
     >>> if post:
     ...     print(f"{post.name}: {post.votesCount} votes")
-    >>> 
     >>> # Type checker knows this returns Sequence[PostRow]
     >>> posts = post_repo.get_all(limit=50)
     >>> for post in posts:
@@ -63,28 +60,22 @@ class Repository(Generic[T]):
     Example:
         >>> # Create repository for PostRow
         >>> post_repo = Repository[PostRow](session, PostRow)
-        >>> 
         >>> # Get single post (returns PostRow | None)
         >>> post = post_repo.get("123")
         >>> assert isinstance(post, PostRow) or post is None
-        >>> 
         >>> # Get all posts (returns Sequence[PostRow])
         >>> posts = post_repo.get_all(limit=10)
         >>> for post in posts:
         ...     print(f"{post.name}: {post.votesCount}")
-        >>> 
         >>> # Create new post
         >>> new_post = PostRow(id="456", name="New Product", ...)
         >>> saved_post = post_repo.create(new_post)
-        >>> 
         >>> # Update existing post
         >>> post.votesCount += 1
         >>> updated_post = post_repo.update(post)
-        >>> 
         >>> # Delete post
         >>> deleted = post_repo.delete("456")
         >>> assert deleted is True
-        >>> 
         >>> # Find by attributes
         >>> featured = post_repo.find_by(featuredAt__ne=None)
         >>> popular = post_repo.find_by(votesCount__gt=100)
@@ -131,7 +122,6 @@ class Repository(Generic[T]):
         Example:
             >>> # Get first page
             >>> page1 = post_repo.get_all(limit=50, offset=0)
-            >>> 
             >>> # Get second page
             >>> page2 = post_repo.get_all(limit=50, offset=50)
         """
@@ -148,12 +138,7 @@ class Repository(Generic[T]):
             Created entity with refreshed state from database
 
         Example:
-            >>> new_post = PostRow(
-            ...     id="123",
-            ...     name="My Product",
-            ...     tagline="Amazing",
-            ...     votesCount=0
-            ... )
+            >>> new_post = PostRow(id="123", name="My Product", tagline="Amazing", votesCount=0)
             >>> saved_post = post_repo.create(new_post)
             >>> print(f"Created: {saved_post.id}")
         """
@@ -219,7 +204,6 @@ class Repository(Generic[T]):
         Example:
             >>> # Find posts by user
             >>> user_posts = post_repo.find_by(userId="user-123")
-            >>> 
             >>> # Find featured posts (note: requires manual query for None checks)
             >>> stmt = select(PostRow).where(PostRow.featuredAt != None)
             >>> featured = session.exec(stmt).all()
@@ -274,8 +258,7 @@ class Repository(Generic[T]):
 
         Example:
             >>> user, created = user_repo.get_or_create(
-            ...     "user-123",
-            ...     defaults={"id": "user-123", "username": "john", "name": "John"}
+            ...     "user-123", defaults={"id": "user-123", "username": "john", "name": "John"}
             ... )
             >>> if created:
             ...     print("Created new user")
@@ -305,9 +288,7 @@ class RepositoryFactory:
     Example:
         >>> from producthuntdb.repository import RepositoryFactory
         >>> from producthuntdb.models import PostRow, UserRow, TopicRow
-        >>> 
         >>> factory = RepositoryFactory(session)
-        >>> 
         >>> post_repo = factory.for_entity(PostRow)
         >>> user_repo = factory.for_entity(UserRow)
         >>> topic_repo = factory.for_entity(TopicRow)

@@ -14,12 +14,9 @@ Reference:
 Example:
     >>> from producthuntdb.api import AsyncGraphQLClient
     >>> from producthuntdb.config import PostsOrder
-    >>> 
     >>> async with AsyncGraphQLClient() as client:
     ...     posts = await client.fetch_posts_page(
-    ...         after_cursor=None,
-    ...         first=50,
-    ...         order=PostsOrder.NEWEST
+    ...         after_cursor=None, first=50, order=PostsOrder.NEWEST
     ...     )
     ...     print(f"Fetched {len(posts['nodes'])} posts")
 """
@@ -52,7 +49,7 @@ try:
         record_exception_in_span,
         set_span_error,
     )
-    
+
     TELEMETRY_AVAILABLE = True
     tracer = get_tracer(__name__)
 except ImportError:
@@ -66,7 +63,7 @@ try:
         graphql_queries_total,
         graphql_request_duration_seconds,
     )
-    
+
     METRICS_AVAILABLE = True
 except ImportError:
     METRICS_AVAILABLE = False
@@ -259,7 +256,7 @@ query CollectionsPage($first: Int!, $after: String) {
 
 class TransientGraphQLError(Exception):
     """Retryable network/HTTP layer failures.
-    
+
     Raised for errors that should trigger retry logic:
     - Network timeouts
     - Connection errors
@@ -343,7 +340,7 @@ class AsyncGraphQLClient:
 
     async def _ensure_client(self) -> httpx.AsyncClient:
         """Lazy initialization of HTTP client.
-        
+
         Returns:
             Configured httpx.AsyncClient instance
         """
@@ -378,7 +375,7 @@ class AsyncGraphQLClient:
     @property
     def rate_limit_remaining(self) -> int | None:
         """Get remaining rate limit from last API call.
-        
+
         Returns:
             Number of requests remaining, or None if unknown
         """
@@ -449,14 +446,8 @@ class AsyncGraphQLClient:
                 pass
 
         # Handle non-200 status codes
-        if resp.status_code != 200 and (
-            resp.status_code == 429 or 500 <= resp.status_code < 600
-        ):
-            reset_info = (
-                f" (resets at {self._rate_limit_reset})"
-                if resp.status_code == 429
-                else ""
-            )
+        if resp.status_code != 200 and (resp.status_code == 429 or 500 <= resp.status_code < 600):
+            reset_info = f" (resets at {self._rate_limit_reset})" if resp.status_code == 429 else ""
             raise TransientGraphQLError(f"HTTP {resp.status_code}{reset_info}")
 
         if resp.status_code != 200:
@@ -552,13 +543,16 @@ class AsyncGraphQLClient:
         if TELEMETRY_AVAILABLE and tracer:
             span_context = tracer.start_as_current_span("graphql.fetch_posts_page")
             span = span_context.__enter__()
-            add_span_attributes(span, {
-                "query_type": "posts",
-                "page_size": first,
-                "order": order.value,
-                "has_cursor": after_cursor is not None,
-                "has_date_filter": posted_after_dt is not None,
-            })
+            add_span_attributes(
+                span,
+                {
+                    "query_type": "posts",
+                    "page_size": first,
+                    "order": order.value,
+                    "has_cursor": after_cursor is not None,
+                    "has_date_filter": posted_after_dt is not None,
+                },
+            )
 
         # Start timing for metrics
         start_time = time.time() if METRICS_AVAILABLE else None
@@ -594,10 +588,15 @@ class AsyncGraphQLClient:
             # Add result attributes to span
             if TELEMETRY_AVAILABLE and span_context:
                 nodes_count = len(result.get("nodes", []))
-                add_span_attributes(span, {
-                    "result.nodes_count": nodes_count,
-                    "result.has_next_page": result.get("pageInfo", {}).get("hasNextPage", False),
-                })
+                add_span_attributes(
+                    span,
+                    {
+                        "result.nodes_count": nodes_count,
+                        "result.has_next_page": result.get("pageInfo", {}).get(
+                            "hasNextPage", False
+                        ),
+                    },
+                )
 
             return result
 

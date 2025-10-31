@@ -131,11 +131,7 @@ def build_graphql_query(
         Formatted GraphQL query string
 
     Example:
-        >>> query = build_graphql_query(
-        ...     "query",
-        ...     ["id", "name", "description"],
-        ...     {"$id": "ID!"}
-        ... )
+        >>> query = build_graphql_query("query", ["id", "name", "description"], {"$id": "ID!"})
     """
     var_def = ""
     if variables:

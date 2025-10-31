@@ -7,12 +7,9 @@ Reference:
 
 Example:
     >>> from producthuntdb.kaggle import KaggleManager
-    >>> 
     >>> km = KaggleManager()
-    >>> 
     >>> # Export database to CSV
     >>> km.export_database_to_csv()
-    >>> 
     >>> # Publish to Kaggle
     >>> km.publish_dataset()
 """
@@ -41,7 +38,6 @@ class KaggleManager:
 
     Example:
         >>> km = KaggleManager()
-        >>> 
         >>> if km.has_kaggle:
         ...     km.export_database_to_csv()
         ...     km.publish_dataset()
@@ -51,7 +47,7 @@ class KaggleManager:
 
     def __init__(self):
         """Initialize Kaggle manager.
-        
+
         Checks for Kaggle credentials and initializes Kaggle API if available.
         Sets has_kaggle=False if credentials missing or API import fails.
         """
@@ -187,9 +183,7 @@ class KaggleManager:
             except Exception:
                 # Dataset doesn't exist, create it
                 logger.info(f"📤 Creating new Kaggle dataset: {self.dataset_slug}")
-                self.api.dataset_create_new(
-                    str(data_dir), public=True, quiet=False, dir_mode="zip"
-                )
+                self.api.dataset_create_new(str(data_dir), public=True, quiet=False, dir_mode="zip")
                 logger.info("✅ Kaggle dataset created successfully")
 
         except Exception as e:

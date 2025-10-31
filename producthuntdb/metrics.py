@@ -17,12 +17,12 @@ Metric Types:
         - graphql_queries_total: Total GraphQL queries by type, status
         - database_operations_total: Total DB operations by type, status
         - errors_total: Total errors by type, component
-    
+
     Gauges (can go up or down):
         - active_database_connections: Current number of DB connections
         - pipeline_stage_active: Number of pipelines in each stage
         - cache_entries: Number of entries in various caches
-    
+
     Histograms (track distributions):
         - graphql_request_duration_seconds: GraphQL query latency
         - database_query_duration_seconds: Database operation latency
@@ -30,25 +30,23 @@ Metric Types:
 
 Usage:
     Basic counter:
-    
+
     ```python
     from producthuntdb.metrics import http_requests_total
-    
+
+
     @app.route("/posts")
     def get_posts():
-        http_requests_total.labels(
-            status="200",
-            path="/posts",
-            method="GET"
-        ).inc()
+        http_requests_total.labels(status="200", path="/posts", method="GET").inc()
         return posts
     ```
-    
+
     Gauge for active connections:
-    
+
     ```python
     from producthuntdb.metrics import active_database_connections
-    
+
+
     def connect_to_db():
         active_database_connections.inc()
         try:
@@ -57,13 +55,14 @@ Usage:
         finally:
             active_database_connections.dec()
     ```
-    
+
     Histogram for tracking latency:
-    
+
     ```python
     from producthuntdb.metrics import graphql_request_duration_seconds
     import time
-    
+
+
     def execute_query(query):
         start = time.time()
         try:
@@ -71,20 +70,20 @@ Usage:
             return result
         finally:
             duration = time.time() - start
-            graphql_request_duration_seconds.labels(
-                query_type="posts",
-                status="success"
-            ).observe(duration)
+            graphql_request_duration_seconds.labels(query_type="posts", status="success").observe(
+                duration
+            )
     ```
-    
+
     Exposing metrics endpoint:
-    
+
     ```python
     from flask import Flask
     from producthuntdb.metrics import generate_metrics_output
-    
+
     app = Flask(__name__)
-    
+
+
     @app.route("/metrics")
     def metrics():
         return generate_metrics_output(), 200, {"Content-Type": "text/plain"}
@@ -126,28 +125,28 @@ registry = CollectorRegistry()
 # Optimized for typical GraphQL/database operations
 # Covers milliseconds (0.01s) to seconds (10s+)
 DEFAULT_LATENCY_BUCKETS = (
-    0.01,   # 10ms
-    0.05,   # 50ms
-    0.1,    # 100ms
-    0.25,   # 250ms
-    0.5,    # 500ms
-    1.0,    # 1s
-    2.5,    # 2.5s
-    5.0,    # 5s
-    10.0,   # 10s
+    0.01,  # 10ms
+    0.05,  # 50ms
+    0.1,  # 100ms
+    0.25,  # 250ms
+    0.5,  # 500ms
+    1.0,  # 1s
+    2.5,  # 2.5s
+    5.0,  # 5s
+    10.0,  # 10s
 )
 
 # HTTP request buckets (slightly faster expectations)
 HTTP_LATENCY_BUCKETS = (
     0.005,  # 5ms
-    0.01,   # 10ms
+    0.01,  # 10ms
     0.025,  # 25ms
-    0.05,   # 50ms
-    0.1,    # 100ms
-    0.25,   # 250ms
-    0.5,    # 500ms
-    1.0,    # 1s
-    2.5,    # 2.5s
+    0.05,  # 50ms
+    0.1,  # 100ms
+    0.25,  # 250ms
+    0.5,  # 500ms
+    1.0,  # 1s
+    2.5,  # 2.5s
 )
 
 
@@ -446,27 +445,29 @@ Example:
 
 # ========== HELPER FUNCTIONS ==========
 
+
 def generate_metrics_output() -> bytes:
     """Generate Prometheus metrics output in text format.
-    
+
     This function generates the /metrics endpoint response containing
     all registered metrics in Prometheus exposition format.
-    
+
     Returns:
         Metrics output as bytes (suitable for HTTP response)
-    
+
     Example:
         ```python
         from flask import Flask
         from producthuntdb.metrics import generate_metrics_output
-        
+
         app = Flask(__name__)
-        
+
+
         @app.route("/metrics")
         def metrics_endpoint():
             return generate_metrics_output(), 200, {"Content-Type": "text/plain; charset=utf-8"}
         ```
-    
+
     Note:
         This uses the custom registry, so only explicitly registered metrics are included.
     """
@@ -475,21 +476,21 @@ def generate_metrics_output() -> bytes:
 
 def register_collector(collector: Collector) -> None:
     """Register a custom collector with the metrics registry.
-    
+
     Use this to add custom metrics or collectors to the global registry.
-    
+
     Args:
         collector: Prometheus collector to register
-    
+
     Example:
         ```python
         from prometheus_client import Gauge
         from producthuntdb.metrics import register_collector
-        
+
         custom_metric = Gauge("custom_metric", "My custom metric")
         register_collector(custom_metric)
         ```
-    
+
     Raises:
         ValueError: If collector is already registered
     """
@@ -503,14 +504,14 @@ def register_collector(collector: Collector) -> None:
 
 def unregister_collector(collector: Collector) -> None:
     """Unregister a collector from the metrics registry.
-    
+
     Args:
         collector: Prometheus collector to unregister
-    
+
     Example:
         ```python
         from producthuntdb.metrics import custom_metric, unregister_collector
-        
+
         unregister_collector(custom_metric)
         ```
     """
@@ -523,23 +524,24 @@ def unregister_collector(collector: Collector) -> None:
 
 def reset_metrics() -> None:
     """Reset all metrics to their initial state.
-    
+
     This is primarily useful for testing. Use with caution in production.
-    
+
     Warning:
         This will reset ALL metrics in the custom registry.
-    
+
     Example:
         ```python
         from producthuntdb.metrics import reset_metrics
-        
+
+
         # In test teardown
         def teardown():
             reset_metrics()
         ```
     """
     logger.warning("Resetting all Prometheus metrics")
-    
+
     # Clear all collectors and re-register them
     # Note: This is a simplified approach; in production you may want
     # to recreate the registry entirely
@@ -553,14 +555,14 @@ def reset_metrics() -> None:
 # Initialize metrics system
 def initialize_metrics() -> None:
     """Initialize the Prometheus metrics system.
-    
+
     This function logs the initialization and can be extended to add
     default collectors or perform other setup tasks.
-    
+
     Example:
         ```python
         from producthuntdb.metrics import initialize_metrics
-        
+
         # Call once at application startup
         initialize_metrics()
         ```

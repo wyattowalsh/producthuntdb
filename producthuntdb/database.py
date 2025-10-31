@@ -13,16 +13,12 @@ Reference:
 
 Example:
     >>> from producthuntdb.database import DatabaseManager
-    >>> 
     >>> db = DatabaseManager()
     >>> db.initialize()
-    >>> 
     >>> # Upsert single entity
     >>> user = db.upsert_user({"id": "123", "username": "john", "name": "John"})
-    >>> 
     >>> # Batch upsert for performance
     >>> posts = db.upsert_posts_batch(posts_data, batch_size=100)
-    >>> 
     >>> db.close()
 """
 
@@ -68,18 +64,14 @@ class DatabaseManager:
     Example:
         >>> db = DatabaseManager()
         >>> db.initialize()
-        >>> 
         >>> # Single operations
         >>> user = db.upsert_user(user_data)
         >>> post = db.upsert_post(post_data)
-        >>> 
         >>> # Batch operations (5x faster)
         >>> posts = db.upsert_posts_batch(posts_data)
-        >>> 
         >>> # Crawl state management
         >>> last_timestamp = db.get_crawl_state("posts")
         >>> db.update_crawl_state("posts", "2024-01-01T00:00:00Z")
-        >>> 
         >>> db.close()
     """
 
@@ -95,7 +87,7 @@ class DatabaseManager:
 
     def initialize(self) -> None:
         """Initialize database engine and create tables.
-        
+
         This method:
         1. Creates database file if it doesn't exist
         2. Creates all tables from SQLModel
@@ -137,7 +129,7 @@ class DatabaseManager:
 
     def create_indexes(self) -> None:
         """Create database indexes for query performance.
-        
+
         Indexes created:
         - Post created_at, featured_at, votes_count for sorting
         - Post user_id, topic links for joins
@@ -147,50 +139,27 @@ class DatabaseManager:
         if self.engine is None:
             raise RuntimeError("Database not initialized")
 
+        # List of index creation statements
+        # Note: SQLite Python driver only allows one statement at a time
+        index_statements = [
+            "CREATE INDEX IF NOT EXISTS idx_post_created_at ON postrow(createdAt DESC)",
+            "CREATE INDEX IF NOT EXISTS idx_post_featured_at ON postrow(featuredAt DESC) WHERE featuredAt IS NOT NULL",
+            "CREATE INDEX IF NOT EXISTS idx_post_votes ON postrow(votesCount DESC)",
+            "CREATE INDEX IF NOT EXISTS idx_post_user ON postrow(userId)",
+            "CREATE INDEX IF NOT EXISTS idx_user_username ON userrow(username)",
+            "CREATE INDEX IF NOT EXISTS idx_topic_slug ON topicrow(slug)",
+            "CREATE INDEX IF NOT EXISTS idx_media_post ON mediarow(post_id, order_index)",
+            "CREATE INDEX IF NOT EXISTS idx_post_topic_post ON posttopiclink(post_id)",
+            "CREATE INDEX IF NOT EXISTS idx_post_topic_topic ON posttopiclink(topic_id)",
+            "CREATE INDEX IF NOT EXISTS idx_maker_post_post ON makerpostlink(post_id)",
+            "CREATE INDEX IF NOT EXISTS idx_maker_post_user ON makerpostlink(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_post_user_created ON postrow(userId, createdAt DESC)",
+        ]
+
         with self.engine.connect() as conn:
-            # Indexes for common query patterns
-            conn.execute(
-                text(
-                    """
-                CREATE INDEX IF NOT EXISTS idx_post_created_at 
-                ON postrow(createdAt DESC);
-                
-                CREATE INDEX IF NOT EXISTS idx_post_featured_at 
-                ON postrow(featuredAt DESC) WHERE featuredAt IS NOT NULL;
-                
-                CREATE INDEX IF NOT EXISTS idx_post_votes 
-                ON postrow(votesCount DESC);
-                
-                CREATE INDEX IF NOT EXISTS idx_post_user 
-                ON postrow(userId);
-                
-                CREATE INDEX IF NOT EXISTS idx_user_username 
-                ON userrow(username);
-                
-                CREATE INDEX IF NOT EXISTS idx_topic_slug 
-                ON topicrow(slug);
-                
-                CREATE INDEX IF NOT EXISTS idx_media_post 
-                ON mediarow(post_id, order_index);
-                
-                CREATE INDEX IF NOT EXISTS idx_post_topic_post 
-                ON posttopiclink(post_id);
-                
-                CREATE INDEX IF NOT EXISTS idx_post_topic_topic 
-                ON posttopiclink(topic_id);
-                
-                CREATE INDEX IF NOT EXISTS idx_maker_post_post 
-                ON makerpostlink(post_id);
-                
-                CREATE INDEX IF NOT EXISTS idx_maker_post_user 
-                ON makerpostlink(user_id);
-                
-                -- Composite indexes for complex queries
-                CREATE INDEX IF NOT EXISTS idx_post_user_created 
-                ON postrow(userId, createdAt DESC);
-            """
-                )
-            )
+            # Execute each index creation separately
+            for statement in index_statements:
+                conn.execute(text(statement))
             conn.commit()
 
         logger.debug("✅ Database indexes created")
@@ -216,12 +185,14 @@ class DatabaseManager:
             Inserted or updated UserRow
 
         Example:
-            >>> user = db.upsert_user({
-            ...     "id": "123",
-            ...     "username": "john_doe",
-            ...     "name": "John Doe",
-            ...     "headline": "Product maker"
-            ... })
+            >>> user = db.upsert_user(
+            ...     {
+            ...         "id": "123",
+            ...         "username": "john_doe",
+            ...         "name": "John Doe",
+            ...         "headline": "Product maker",
+            ...     }
+            ... )
         """
         if self.session is None:
             raise RuntimeError("Database not initialized")
@@ -239,9 +210,7 @@ class DatabaseManager:
         else:
             # Create new
             if "createdAt" in user_data and user_data["createdAt"]:
-                user_data["createdAt"] = format_iso(
-                    parse_datetime(user_data["createdAt"])
-                )
+                user_data["createdAt"] = format_iso(parse_datetime(user_data["createdAt"]))
             user_row = UserRow(**user_data)
             self.session.add(user_row)
 
@@ -262,12 +231,14 @@ class DatabaseManager:
             Inserted or updated PostRow
 
         Example:
-            >>> post = db.upsert_post({
-            ...     "id": "456",
-            ...     "name": "Amazing Product",
-            ...     "tagline": "The best thing ever",
-            ...     "votesCount": 100
-            ... })
+            >>> post = db.upsert_post(
+            ...     {
+            ...         "id": "456",
+            ...         "name": "Amazing Product",
+            ...         "tagline": "The best thing ever",
+            ...         "votesCount": 100,
+            ...     }
+            ... )
         """
         if self.session is None:
             raise RuntimeError("Database not initialized")
@@ -386,9 +357,7 @@ class DatabaseManager:
                     processed = {**post_dict}
                     for ts_field in ["createdAt", "featuredAt"]:
                         if ts_field in processed and processed[ts_field]:
-                            processed[ts_field] = format_iso(
-                                parse_datetime(processed[ts_field])
-                            )
+                            processed[ts_field] = format_iso(parse_datetime(processed[ts_field]))
 
                     # Remove nested objects
                     for key in ["user", "makers", "topics", "media", "thumbnail"]:
@@ -433,12 +402,9 @@ class DatabaseManager:
             Inserted or updated TopicRow
 
         Example:
-            >>> topic = db.upsert_topic({
-            ...     "id": "789",
-            ...     "name": "AI",
-            ...     "slug": "ai",
-            ...     "followersCount": 5000
-            ... })
+            >>> topic = db.upsert_topic(
+            ...     {"id": "789", "name": "AI", "slug": "ai", "followersCount": 5000}
+            ... )
         """
         if self.session is None:
             raise RuntimeError("Database not initialized")
@@ -448,9 +414,7 @@ class DatabaseManager:
 
         # Process timestamps
         if "createdAt" in topic_data and topic_data["createdAt"]:
-            topic_data["createdAt"] = format_iso(
-                parse_datetime(topic_data["createdAt"])
-            )
+            topic_data["createdAt"] = format_iso(parse_datetime(topic_data["createdAt"]))
 
         if existing:
             for key, value in topic_data.items():

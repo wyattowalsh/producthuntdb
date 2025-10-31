@@ -31,37 +31,37 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class PostsOrder(StrEnum):
     """Post sorting options for GraphQL queries."""
 
-    RANKING      = "RANKING"
-    NEWEST       = "NEWEST"
-    FEATURED_AT  = "FEATURED_AT"
-    VOTES        = "VOTES"
+    RANKING = "RANKING"
+    NEWEST = "NEWEST"
+    FEATURED_AT = "FEATURED_AT"
+    VOTES = "VOTES"
 
 
 class TopicsOrder(StrEnum):
     """Topic sorting options for GraphQL queries."""
 
     FOLLOWERS_COUNT = "FOLLOWERS_COUNT"
-    NEWEST          = "NEWEST"
+    NEWEST = "NEWEST"
 
 
 class CollectionsOrder(StrEnum):
     """Collection sorting options for GraphQL queries."""
 
-    FEATURED_AT     = "FEATURED_AT"
+    FEATURED_AT = "FEATURED_AT"
     FOLLOWERS_COUNT = "FOLLOWERS_COUNT"
-    NEWEST          = "NEWEST"
+    NEWEST = "NEWEST"
 
 
 class CommentsOrder(StrEnum):
     """Comment sorting options for GraphQL queries."""
 
-    NEWEST       = "NEWEST"
-    VOTES_COUNT  = "VOTES_COUNT"
+    NEWEST = "NEWEST"
+    VOTES_COUNT = "VOTES_COUNT"
 
 
 class Environment(StrEnum):
     """Runtime environment with specific behavior profiles.
-    
+
     Attributes:
         DEVELOPMENT: Verbose logging, single concurrency, safe defaults
         PRODUCTION: Conservative settings, tracing enabled, optimized for stability
@@ -225,16 +225,16 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def apply_environment_profile(self) -> "Settings":
         """Apply environment-specific defaults.
-        
+
         This validator runs after all fields are set and adjusts settings
         based on the runtime environment to ensure appropriate behavior.
-        
+
         Profiles:
             - PRODUCTION: Conservative concurrency (max 5), INFO logging, tracing enabled
             - DEVELOPMENT: Single concurrency, DEBUG logging, tracing disabled
             - TESTING: In-memory database, ERROR logging, no file logging, no tracing
             - STAGING: Balanced settings between development and production
-        
+
         Returns:
             Modified settings instance with environment-specific adjustments
         """
@@ -245,14 +245,14 @@ class Settings(BaseSettings):
                 self.log_level = "INFO"
             self.log_json = True  # Structured logs for production
             self.enable_tracing = True
-            
+
         elif self.environment == Environment.DEVELOPMENT:
             # Development: Verbose and safe
             self.max_concurrency = 1  # Single-threaded for easier debugging
             self.log_level = "DEBUG"
             self.log_json = False  # Human-readable logs
             self.enable_tracing = False
-            
+
         elif self.environment == Environment.TESTING:
             # Testing: Fast and minimal
             self.database_path = Path(":memory:")
@@ -261,14 +261,14 @@ class Settings(BaseSettings):
             self.log_to_file = False
             self.log_json = False
             self.enable_tracing = False
-            
+
         elif self.environment == Environment.STAGING:
             # Staging: Production-like but with more logging
             self.max_concurrency = min(self.max_concurrency, 3)
             self.log_level = "INFO"
             self.log_json = True
             self.enable_tracing = True
-        
+
         return self
 
     @property
@@ -383,4 +383,3 @@ def get_settings() -> Settings:
 
 # Global settings instance
 settings = get_settings()
-

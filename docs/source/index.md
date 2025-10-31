@@ -34,6 +34,8 @@ ProductHuntDB is a production-grade data pipeline for harvesting, storing, and p
 
 ### Quick Start
 
+:::{tab-set}
+:::{tab-item} macOS / Linux
 ```bash
 # Clone the repository
 git clone https://github.com/wyattowalsh/producthuntdb.git
@@ -57,6 +59,54 @@ uv run producthuntdb sync
 uv run producthuntdb status
 uv run producthuntdb export
 ```
+:::
+
+:::{tab-item} Windows PowerShell
+```powershell
+# Clone the repository
+git clone https://github.com/wyattowalsh/producthuntdb.git
+Set-Location producthuntdb
+
+# Install dependencies with uv
+uv sync
+
+# Configure credentials
+Copy-Item .env.example .env
+notepad .env  # add PRODUCTHUNT_TOKEN
+
+# Initialize and verify the pipeline
+uv run producthuntdb init
+uv run producthuntdb verify
+
+# Sync Product Hunt data
+uv run producthuntdb sync
+
+# Inspect stats or export artifacts
+uv run producthuntdb status
+uv run producthuntdb export
+```
+:::
+:::
+
+### Feature Highlights
+
+:::{dropdown} When to choose ProductHuntDB
+:color: primary
+
+- Need a self-contained SQLite dataset that mirrors Product Hunt GraphQL v2.
+- Want Kaggle-ready exports without hand-writing metadata each release.
+- Prefer type-safe configuration and retry-aware API access out of the box.
+
+:::
+
+:::{dropdown} Friendly defaults
+:color: secondary
+
+- `uv` manages dependencies and virtual environments.
+- Safety buffers prevent gaps during incremental syncs.
+- Rich + Loguru provide colourful, structured CLI output.
+
+:::
 
 ### What’s Next
 
@@ -90,6 +140,7 @@ Testing, coverage, and CI recommendations for contributors.
 
 ### Keeping Docs Healthy
 
+- Follow the {doc}`Automation & CI Runbook <guides/automation>` to keep workflows reproducible.
 - Run `make docs` and `sphinx-build -b linkcheck docs/source docs/build/linkcheck` before publishing.
 - Document new CLI commands and settings with docstrings—autodoc pages pull descriptions directly from code.
 - Update the **Style Guide** when adding new content patterns, terminology, or iconography.

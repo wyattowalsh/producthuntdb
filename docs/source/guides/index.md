@@ -7,6 +7,7 @@ ProductHuntDB tasks are intentionally scriptable. These guides describe repeatab
 
 sync
 publish
+automation
 troubleshooting
 ```
 

@@ -31,7 +31,7 @@ from producthuntdb.io import DatabaseManager, KaggleManager
 from producthuntdb.pipeline import DataPipeline
 
 # Initialize CLI app
-app     = typer.Typer(
+app = typer.Typer(
     name="producthuntdb",
     help="Product Hunt API data sink and Kaggle dataset manager",
     add_completion=False,
@@ -141,12 +141,8 @@ def sync(
     # Show configuration
     console.print(f"📍 Database: [yellow]{settings.database_path}[/yellow]")
     console.print(f"🔑 API Token: [yellow]{settings.redact_token()}[/yellow]")
-    console.print(
-        f"⚡ Concurrency: [yellow]{settings.max_concurrency}[/yellow]"
-    )
-    console.print(
-        f"📄 Page Size: [yellow]{settings.page_size}[/yellow]"
-    )
+    console.print(f"⚡ Concurrency: [yellow]{settings.max_concurrency}[/yellow]")
+    console.print(f"📄 Page Size: [yellow]{settings.page_size}[/yellow]")
 
     if full_refresh:
         console.print("🔄 Mode: [bold yellow]Full Refresh[/bold yellow]")
@@ -177,9 +173,7 @@ def sync(
 
             elif topics_only:
                 stats = await pipeline.sync_topics(max_pages)
-                console.print(
-                    f"\n✅ [bold green]Synced {stats['topics']} topics[/bold green]"
-                )
+                console.print(f"\n✅ [bold green]Synced {stats['topics']} topics[/bold green]")
 
             elif collections_only:
                 stats = await pipeline.sync_collections(max_pages)
@@ -380,7 +374,7 @@ def status(
 
         # Database statistics
         pipeline = DataPipeline(db=db)
-        stats    = pipeline.get_statistics()
+        stats = pipeline.get_statistics()
 
         stats_table = Table(title="Database Statistics")
         stats_table.add_column("Entity", style="cyan")
@@ -399,9 +393,7 @@ def status(
         # Crawl state
         posts_state = db.get_crawl_state("posts")
         if posts_state:
-            console.print(
-                f"📅 Last posts sync: [yellow]{posts_state}[/yellow]"
-            )
+            console.print(f"📅 Last posts sync: [yellow]{posts_state}[/yellow]")
         else:
             console.print("📅 No sync history found")
 
@@ -443,7 +435,7 @@ def verify(
             await pipeline.initialize()
 
             viewer = await pipeline.verify_authentication()
-            user   = viewer.get("user", {})
+            user = viewer.get("user", {})
 
             # Display viewer info
             viewer_table = Table(title="Authenticated User", show_header=False)
@@ -795,32 +787,32 @@ def health_check(
     ),
 ) -> None:
     """Run health checks on database and API connectivity.
-    
+
     This command verifies:
     - Database file exists and is readable
     - Database schema is initialized
     - API authentication is valid
     - API is reachable and responsive
-    
+
     Examples:
         # Basic health check with human-readable output
         $ producthuntdb health-check
-        
+
         # JSON output for monitoring systems
         $ producthuntdb health-check --json
-        
+
         # Verbose output with detailed diagnostics
         $ producthuntdb health-check --verbose
     """
     import json
     import time
     from datetime import datetime
-    
+
     setup_logging(verbose)
-    
+
     if not json_output:
         console.print("🏥 [bold cyan]Running Health Checks[/bold cyan]\n")
-    
+
     # Track all check results
     checks = {
         "timestamp": datetime.utcnow().isoformat(),
@@ -831,13 +823,13 @@ def health_check(
             "database_tables": {"status": "unknown", "message": ""},
             "api_authentication": {"status": "unknown", "message": ""},
             "api_connectivity": {"status": "unknown", "message": ""},
-        }
+        },
     }
-    
+
     # Check 1: Database file exists
     if not json_output:
         console.print("🗄️  Checking database file...")
-    
+
     try:
         db_path = settings.database_path
         if db_path.exists() and db_path.is_file():
@@ -867,18 +859,18 @@ def health_check(
         checks["status"] = "unhealthy"
         if not json_output:
             console.print(f"   ❌ Error: {e}\n")
-    
+
     # Check 2: Database connection
     if not json_output:
         console.print("🔌 Checking database connection...")
-    
+
     try:
         db = DatabaseManager()
         # Try to execute a simple query
         with db.engine.connect() as conn:
             result = conn.execute(db.text("SELECT 1"))
             result.fetchone()
-        
+
         checks["checks"]["database_connection"] = {
             "status": "pass",
             "message": "Database connection successful",
@@ -893,24 +885,26 @@ def health_check(
         checks["status"] = "unhealthy"
         if not json_output:
             console.print(f"   ❌ Database connection failed: {e}\n")
-    
+
     # Check 3: Database tables exist
     if not json_output:
         console.print("📋 Checking database tables...")
-    
+
     try:
         db = DatabaseManager()
         with db.engine.connect() as conn:
             # Check if main tables exist
-            result = conn.execute(db.text(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name IN "
-                "('postrow', 'userrow', 'topicrow', 'voterow', 'commentrow')"
-            ))
+            result = conn.execute(
+                db.text(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name IN "
+                    "('postrow', 'userrow', 'topicrow', 'voterow', 'commentrow')"
+                )
+            )
             tables = [row[0] for row in result.fetchall()]
-            
+
             expected_tables = ['postrow', 'userrow', 'topicrow']
             missing_tables = [t for t in expected_tables if t not in tables]
-            
+
             if not missing_tables:
                 checks["checks"]["database_tables"] = {
                     "status": "pass",
@@ -937,11 +931,11 @@ def health_check(
         checks["status"] = "unhealthy"
         if not json_output:
             console.print(f"   ❌ Error checking tables: {e}\n")
-    
+
     # Check 4: API authentication
     if not json_output:
         console.print("🔑 Checking API authentication...")
-    
+
     try:
         # Check if token is configured
         if not settings.producthunt_token:
@@ -968,24 +962,25 @@ def health_check(
         checks["status"] = "unhealthy"
         if not json_output:
             console.print(f"   ❌ Error: {e}\n")
-    
+
     # Check 5: API connectivity
     if not json_output:
         console.print("🌐 Checking API connectivity...")
-    
+
     try:
         start_time = time.time()
-        
+
         async def check_api():
             from producthuntdb.io import AsyncGraphQLClient
+
             async with AsyncGraphQLClient() as client:
                 viewer = await client.fetch_viewer()
                 return viewer
-        
+
         viewer = run_async(check_api())
-        
+
         elapsed_ms = (time.time() - start_time) * 1000
-        
+
         if viewer and "user" in viewer:
             checks["checks"]["api_connectivity"] = {
                 "status": "pass",
@@ -995,7 +990,9 @@ def health_check(
             }
             if not json_output:
                 console.print(f"   ✅ API responding ({elapsed_ms:.0f}ms)\n")
-                console.print(f"   👤 Authenticated as: {viewer['user'].get('username', 'unknown')}\n")
+                console.print(
+                    f"   👤 Authenticated as: {viewer['user'].get('username', 'unknown')}\n"
+                )
         else:
             checks["checks"]["api_connectivity"] = {
                 "status": "fail",
@@ -1013,7 +1010,7 @@ def health_check(
         checks["status"] = "unhealthy"
         if not json_output:
             console.print(f"   ❌ API connectivity failed: {e}\n")
-    
+
     # Output results
     if json_output:
         # JSON output for monitoring systems
@@ -1021,31 +1018,33 @@ def health_check(
     else:
         # Human-readable summary
         console.print("─" * 50)
-        
+
         status_emoji = {
             "healthy": "✅",
             "degraded": "⚠️",
             "unhealthy": "❌",
         }
-        
+
         status_color = {
             "healthy": "green",
             "degraded": "yellow",
             "unhealthy": "red",
         }
-        
+
         emoji = status_emoji.get(checks["status"], "❓")
         color = status_color.get(checks["status"], "white")
-        
-        console.print(f"\n{emoji} [bold {color}]Overall Status: {checks['status'].upper()}[/bold {color}]")
-        
+
+        console.print(
+            f"\n{emoji} [bold {color}]Overall Status: {checks['status'].upper()}[/bold {color}]"
+        )
+
         # Count pass/fail
         passed = sum(1 for c in checks["checks"].values() if c["status"] == "pass")
         failed = sum(1 for c in checks["checks"].values() if c["status"] == "fail")
         total = len(checks["checks"])
-        
+
         console.print(f"\n📊 Checks: {passed}/{total} passed, {failed}/{total} failed")
-    
+
     # Exit with appropriate code
     if checks["status"] == "unhealthy":
         raise typer.Exit(code=1)
@@ -1062,4 +1061,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

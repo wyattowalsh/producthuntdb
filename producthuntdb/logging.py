@@ -86,9 +86,7 @@ def serialize(record: dict[str, Any]) -> str:
         subset["exception"] = {
             "type": exc.type.__name__ if exc.type else None,
             "value": str(exc.value),
-            "traceback": traceback.format_exception(
-                exc.type, exc.value, exc.traceback
-            ),
+            "traceback": traceback.format_exception(exc.type, exc.value, exc.traceback),
         }
 
     return json.dumps(subset, default=str)
@@ -229,10 +227,7 @@ def set_request_context(
 
     Example:
         >>> import uuid
-        >>> set_request_context(
-        ...     request_id=str(uuid.uuid4()),
-        ...     operation="sync_posts"
-        ... )
+        >>> set_request_context(request_id=str(uuid.uuid4()), operation="sync_posts")
         >>> logger.info("Starting sync")
         # Log includes request_id and operation automatically
     """

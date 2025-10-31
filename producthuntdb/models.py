@@ -598,7 +598,7 @@ class PostRow(SQLModel, table=True):
     @classmethod
     def from_pydantic(cls, post: Post) -> "PostRow":
         """Create PostRow from Pydantic Post model.
-        
+
         Note: Media items should be saved separately using MediaRow.from_pydantic()
         """
         return cls(
@@ -621,9 +621,7 @@ class PostRow(SQLModel, table=True):
             thumbnail_type=post.thumbnail.type if post.thumbnail else None,
             thumbnail_url=post.thumbnail.url if post.thumbnail else None,
             thumbnail_videoUrl=post.thumbnail.videoUrl if post.thumbnail else None,
-            productlinks_json=json.dumps(post.productLinks)
-            if post.productLinks
-            else None,
+            productlinks_json=json.dumps(post.productLinks) if post.productLinks else None,
         )
 
 
@@ -1022,4 +1020,3 @@ class MakerGroupMemberLink(SQLModel, table=True):
 
     user_id: str = Field(primary_key=True, foreign_key="userrow.id")
     group_id: str = Field(primary_key=True, foreign_key="makergrouprow.id")
-

@@ -16,10 +16,8 @@ Example:
     >>> from producthuntdb.pipeline import DataPipeline
     >>> from producthuntdb.api import AsyncGraphQLClient
     >>> from producthuntdb.database import DatabaseManager
-    >>> 
     >>> # Use default implementations
     >>> pipeline = DataPipeline()
-    >>> 
     >>> # Or inject custom implementations
     >>> client = AsyncGraphQLClient(max_concurrency=5)
     >>> db = DatabaseManager()
@@ -70,14 +68,13 @@ class DataPipeline:
         Example:
             >>> # Use default implementations
             >>> pipeline = DataPipeline()
-            >>> 
             >>> # Inject custom implementations for testing
             >>> mock_client = MockGraphQLClient()
             >>> mock_db = MockDatabaseManager()
             >>> pipeline = DataPipeline(client=mock_client, db=mock_db)
         """
         self.client = client or AsyncGraphQLClient()
-        self.db     = db or DatabaseManager()
+        self.db = db or DatabaseManager()
 
     async def initialize(self) -> None:
         """Initialize pipeline components."""
@@ -124,8 +121,7 @@ class DataPipeline:
 
             user_data = viewer_data["user"]
             logger.info(
-                f"✅ Authenticated as: {user_data.get('username')} "
-                f"({user_data.get('name')})"
+                f"✅ Authenticated as: {user_data.get('username')} ({user_data.get('name')})"
             )
 
             return viewer_data
@@ -155,11 +151,11 @@ class DataPipeline:
         logger.info("🚀 Starting posts synchronization")
 
         stats = {
-            "posts":    0,
-            "users":    0,
-            "topics":   0,
-            "pages":    0,
-            "skipped":  0,
+            "posts": 0,
+            "users": 0,
+            "topics": 0,
+            "pages": 0,
+            "skipped": 0,
         }
 
         # Determine starting point for incremental updates
@@ -174,8 +170,8 @@ class DataPipeline:
                 )
 
         # Pagination loop
-        cursor          = None
-        has_next_page   = True
+        cursor = None
+        has_next_page = True
         latest_timestamp = None
 
         with tqdm(desc="Fetching posts", unit=" pages") as pbar:
@@ -194,7 +190,7 @@ class DataPipeline:
                         order=PostsOrder.NEWEST,
                     )
 
-                    nodes    = posts_response.get("nodes", [])
+                    nodes = posts_response.get("nodes", [])
                     page_info = posts_response.get("pageInfo", {})
 
                     if not nodes:
@@ -209,10 +205,7 @@ class DataPipeline:
 
                             # Track latest timestamp
                             if post.createdAt:
-                                if (
-                                    not latest_timestamp
-                                    or post.createdAt > latest_timestamp
-                                ):
+                                if not latest_timestamp or post.createdAt > latest_timestamp:
                                     latest_timestamp = post.createdAt
 
                             # Store user (submitter)
@@ -253,22 +246,18 @@ class DataPipeline:
 
                         except ValidationError as e:
                             logger.warning(
-                                f"⚠️ Validation error for post "
-                                f"{post_data.get('id')}: {e}"
+                                f"⚠️ Validation error for post {post_data.get('id')}: {e}"
                             )
                             stats["skipped"] += 1
                             continue
 
                         except Exception as e:
-                            logger.error(
-                                f"❌ Error processing post "
-                                f"{post_data.get('id')}: {e}"
-                            )
+                            logger.error(f"❌ Error processing post {post_data.get('id')}: {e}")
                             stats["skipped"] += 1
                             continue
 
                     # Update pagination
-                    cursor        = page_info.get("endCursor")
+                    cursor = page_info.get("endCursor")
                     has_next_page = page_info.get("hasNextPage", False)
                     stats["pages"] += 1
 
@@ -313,11 +302,11 @@ class DataPipeline:
 
         stats = {
             "topics": 0,
-            "pages":  0,
+            "pages": 0,
             "skipped": 0,
         }
 
-        cursor        = None
+        cursor = None
         has_next_page = True
 
         with tqdm(desc="Fetching topics", unit=" pages") as pbar:
@@ -332,7 +321,7 @@ class DataPipeline:
                         first=settings.page_size,
                     )
 
-                    nodes     = topics_response.get("nodes", [])
+                    nodes = topics_response.get("nodes", [])
                     page_info = topics_response.get("pageInfo", {})
 
                     if not nodes:
@@ -347,21 +336,17 @@ class DataPipeline:
 
                         except ValidationError as e:
                             logger.warning(
-                                f"⚠️ Validation error for topic "
-                                f"{topic_data.get('id')}: {e}"
+                                f"⚠️ Validation error for topic {topic_data.get('id')}: {e}"
                             )
                             stats["skipped"] += 1
                             continue
 
                         except Exception as e:
-                            logger.error(
-                                f"❌ Error processing topic "
-                                f"{topic_data.get('id')}: {e}"
-                            )
+                            logger.error(f"❌ Error processing topic {topic_data.get('id')}: {e}")
                             stats["skipped"] += 1
                             continue
 
-                    cursor        = page_info.get("endCursor")
+                    cursor = page_info.get("endCursor")
                     has_next_page = page_info.get("hasNextPage", False)
                     stats["pages"] += 1
 
@@ -395,12 +380,12 @@ class DataPipeline:
 
         stats = {
             "collections": 0,
-            "users":       0,
-            "pages":       0,
-            "skipped":     0,
+            "users": 0,
+            "pages": 0,
+            "skipped": 0,
         }
 
-        cursor        = None
+        cursor = None
         has_next_page = True
 
         with tqdm(desc="Fetching collections", unit=" pages") as pbar:
@@ -415,7 +400,7 @@ class DataPipeline:
                         first=settings.page_size,
                     )
 
-                    nodes     = collections_response.get("nodes", [])
+                    nodes = collections_response.get("nodes", [])
                     page_info = collections_response.get("pageInfo", {})
 
                     if not nodes:
@@ -438,9 +423,7 @@ class DataPipeline:
                                 raise RuntimeError("Database not initialized")
 
                             collection_row = CollectionRow.from_pydantic(collection)
-                            existing_collection = self.db.session.get(
-                                CollectionRow, collection.id
-                            )
+                            existing_collection = self.db.session.get(CollectionRow, collection.id)
 
                             if existing_collection:
                                 # Update existing
@@ -462,13 +445,12 @@ class DataPipeline:
 
                         except Exception as e:
                             logger.error(
-                                f"❌ Error processing collection "
-                                f"{collection_data.get('id')}: {e}"
+                                f"❌ Error processing collection {collection_data.get('id')}: {e}"
                             )
                             stats["skipped"] += 1
                             continue
 
-                    cursor        = page_info.get("endCursor")
+                    cursor = page_info.get("endCursor")
                     has_next_page = page_info.get("hasNextPage", False)
                     stats["pages"] += 1
 
@@ -506,18 +488,16 @@ class DataPipeline:
         await self.verify_authentication()
 
         # Sync all entities
-        posts_stats       = await self.sync_posts(full_refresh, max_pages)
-        topics_stats      = await self.sync_topics(max_pages)
+        posts_stats = await self.sync_posts(full_refresh, max_pages)
+        topics_stats = await self.sync_topics(max_pages)
         collections_stats = await self.sync_collections(max_pages)
 
         combined_stats = {
-            "posts":       posts_stats,
-            "topics":      topics_stats,
+            "posts": posts_stats,
+            "topics": topics_stats,
             "collections": collections_stats,
             "total_entities": (
-                posts_stats["posts"]
-                + topics_stats["topics"]
-                + collections_stats["collections"]
+                posts_stats["posts"] + topics_stats["topics"] + collections_stats["collections"]
             ),
         }
 
@@ -549,25 +529,24 @@ class DataPipeline:
             raise RuntimeError("Database not initialized")
 
         stats = {
-            "posts":       self.db.session.exec(
+            "posts": self.db.session.exec(
                 select(func.count(PostRow.id))  # type: ignore[arg-type]
             ).one(),
-            "users":       self.db.session.exec(
+            "users": self.db.session.exec(
                 select(func.count(UserRow.id))  # type: ignore[arg-type]
             ).one(),
-            "topics":      self.db.session.exec(
+            "topics": self.db.session.exec(
                 select(func.count(TopicRow.id))  # type: ignore[arg-type]
             ).one(),
             "collections": self.db.session.exec(
                 select(func.count(CollectionRow.id))  # type: ignore[arg-type]
             ).one(),
-            "comments":    self.db.session.exec(
+            "comments": self.db.session.exec(
                 select(func.count(CommentRow.id))  # type: ignore[arg-type]
             ).one(),
-            "votes":       self.db.session.exec(
+            "votes": self.db.session.exec(
                 select(func.count(VoteRow.id))  # type: ignore[arg-type]
             ).one(),
         }
 
         return stats
-

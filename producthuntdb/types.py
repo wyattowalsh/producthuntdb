@@ -32,7 +32,7 @@ from typing import NotRequired, Required, TypedDict
 
 class UserData(TypedDict, total=False):
     """User/Maker data structure from Product Hunt API.
-    
+
     Attributes:
         id: Required unique identifier
         username: Required username
@@ -54,7 +54,7 @@ class UserData(TypedDict, total=False):
 
 class TopicData(TypedDict, total=False):
     """Topic/Tag data structure from Product Hunt API.
-    
+
     Attributes:
         id: Required unique identifier
         name: Required display name
@@ -74,7 +74,7 @@ class TopicData(TypedDict, total=False):
 
 class MediaData(TypedDict, total=False):
     """Media (images/videos) data structure from Product Hunt API.
-    
+
     Attributes:
         type: Required media type (image, video)
         url: Required media URL
@@ -90,7 +90,7 @@ class MediaData(TypedDict, total=False):
 
 class ProductLinkData(TypedDict, total=False):
     """Product external link data structure.
-    
+
     Attributes:
         type: Required link type (website, iOS, Android, etc.)
         url: Required link URL
@@ -102,7 +102,7 @@ class ProductLinkData(TypedDict, total=False):
 
 class GoalData(TypedDict, total=False):
     """Product launch goal data structure.
-    
+
     Attributes:
         id: Required unique identifier
         name: Required goal name
@@ -116,7 +116,7 @@ class GoalData(TypedDict, total=False):
 
 class CollectionData(TypedDict, total=False):
     """Collection data structure from Product Hunt API.
-    
+
     Attributes:
         id: Required unique identifier
         name: Required collection name
@@ -142,7 +142,7 @@ class CollectionData(TypedDict, total=False):
 
 class CommentData(TypedDict, total=False):
     """Comment data structure from Product Hunt API.
-    
+
     Attributes:
         id: Required unique identifier
         body: Required comment text
@@ -166,7 +166,7 @@ class CommentData(TypedDict, total=False):
 
 class VoteData(TypedDict, total=False):
     """Vote data structure from Product Hunt API.
-    
+
     Attributes:
         id: Required unique identifier
         createdAt: Required vote timestamp
@@ -184,9 +184,9 @@ class VoteData(TypedDict, total=False):
 
 class PostData(TypedDict, total=False):
     """Post (Product) data structure from Product Hunt API.
-    
+
     This is the primary entity containing comprehensive product information.
-    
+
     Attributes:
         id: Required unique identifier
         name: Required product name
@@ -197,7 +197,7 @@ class PostData(TypedDict, total=False):
         votesCount: Required vote count
         commentsCount: Required comment count
         createdAt: Required creation timestamp
-        
+
         description: Optional full description
         featuredAt: Optional featured timestamp
         website: Optional product website
@@ -205,7 +205,7 @@ class PostData(TypedDict, total=False):
         reviewsCount: Optional review count
         isCollected: Optional collection status
         isVoted: Optional user vote status
-        
+
         user: Optional owner user data
         makers: Optional list of maker user data
         topics: Optional topics/tags connection
@@ -249,15 +249,15 @@ class PostData(TypedDict, total=False):
 
 class PageInfo(TypedDict):
     """GraphQL pagination information.
-    
+
     Standard GraphQL Cursor Connections Specification structure.
-    
+
     Attributes:
         hasNextPage: True if more results available after current page
         hasPreviousPage: True if results exist before current page
         startCursor: Cursor for first item in current page (nullable)
         endCursor: Cursor for last item in current page (nullable)
-        
+
     Reference:
         - GraphQL Cursor Connections: https://relay.dev/graphql/connections.htm
     """
@@ -270,7 +270,7 @@ class PageInfo(TypedDict):
 
 class PostsConnection(TypedDict):
     """GraphQL connection structure for posts.
-    
+
     Attributes:
         nodes: List of post entities
         pageInfo: Pagination metadata
@@ -282,7 +282,7 @@ class PostsConnection(TypedDict):
 
 class TopicsConnection(TypedDict):
     """GraphQL connection structure for topics.
-    
+
     Attributes:
         nodes: List of topic entities
         pageInfo: Pagination metadata
@@ -294,7 +294,7 @@ class TopicsConnection(TypedDict):
 
 class CollectionsConnection(TypedDict):
     """GraphQL connection structure for collections.
-    
+
     Attributes:
         nodes: List of collection entities
         pageInfo: Pagination metadata
@@ -306,7 +306,7 @@ class CollectionsConnection(TypedDict):
 
 class CommentsConnection(TypedDict):
     """GraphQL connection structure for comments.
-    
+
     Attributes:
         nodes: List of comment entities
         pageInfo: Pagination metadata
@@ -318,7 +318,7 @@ class CommentsConnection(TypedDict):
 
 class VotesConnection(TypedDict):
     """GraphQL connection structure for votes.
-    
+
     Attributes:
         nodes: List of vote entities
         pageInfo: Pagination metadata
@@ -335,7 +335,7 @@ class VotesConnection(TypedDict):
 
 class PostsResponse(TypedDict):
     """Top-level API response for posts query.
-    
+
     Attributes:
         posts: Posts connection with nodes and pagination
     """
@@ -345,7 +345,7 @@ class PostsResponse(TypedDict):
 
 class TopicsResponse(TypedDict):
     """Top-level API response for topics query.
-    
+
     Attributes:
         topics: Topics connection with nodes and pagination
     """
@@ -355,7 +355,7 @@ class TopicsResponse(TypedDict):
 
 class ViewerResponse(TypedDict):
     """Top-level API response for viewer (authenticated user) query.
-    
+
     Attributes:
         viewer: Current authenticated user data
     """
@@ -365,7 +365,7 @@ class ViewerResponse(TypedDict):
 
 class GraphQLResponse(TypedDict):
     """Standard GraphQL response wrapper.
-    
+
     Attributes:
         data: Response data (structure varies by query)
         errors: Optional list of GraphQL errors

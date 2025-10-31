@@ -329,3 +329,211 @@ class TestUtilsCoverage:
         assert "$after: String" in query
         assert "id" in query
         assert "name" in query
+
+
+class TestUtilsAdditionalCoverage:
+    """Additional comprehensive tests for 90%+ coverage."""
+
+    def test_utc_now_returns_datetime(self):
+        """Test utc_now returns a datetime object."""
+        result = utc_now()
+        assert isinstance(result, datetime)
+        assert result.tzinfo == timezone.utc
+
+    def test_utc_now_iso_ends_with_z(self):
+        """Test utc_now_iso returns ISO string with Z suffix."""
+        result = utc_now_iso()
+        assert isinstance(result, str)
+        assert result.endswith('Z')
+        assert 'T' in result
+
+    def test_format_iso_with_none_input(self):
+        """Test format_iso returns None for None input."""
+        assert format_iso(None) is None
+
+    def test_format_iso_with_datetime_object(self):
+        """Test format_iso with datetime object."""
+        dt = datetime(2024, 6, 15, 14, 30, 45, tzinfo=timezone.utc)
+        result = format_iso(dt)
+        assert result == "2024-06-15T14:30:45Z"
+
+    def test_redact_token_very_short(self):
+        """Test redact_token with very short token."""
+        assert redact_token("abc") == "***"
+
+    def test_redact_token_exact_12_chars(self):
+        """Test redact_token with exactly 12 characters."""
+        token = "123456789012"
+        result = redact_token(token)
+        assert result == "***"
+
+    def test_redact_token_13_chars(self):
+        """Test redact_token with 13 characters."""
+        token = "1234567890123"
+        result = redact_token(token)
+        assert result.startswith("12345678")
+        assert result.endswith("0123")
+
+    def test_redact_token_long_token(self):
+        """Test redact_token with long token."""
+        token = "a" * 50
+        result = redact_token(token)
+        assert len(result) == 12 + 3  # 8 + ... + 4
+
+    def test_redact_token_with_empty_string(self):
+        """Test redact_token with empty string."""
+        assert redact_token("") == "None"
+
+    def test_ensure_list_preserves_list(self):
+        """Test ensure_list preserves existing list."""
+        original = [1, 2, 3]
+        result = ensure_list(original)
+        assert result == original
+        assert result is original  # Same object
+
+    def test_ensure_list_wraps_int(self):
+        """Test ensure_list wraps integer."""
+        assert ensure_list(42) == [42]
+
+    def test_ensure_list_wraps_string(self):
+        """Test ensure_list wraps string."""
+        assert ensure_list("test") == ["test"]
+
+    def test_ensure_list_wraps_dict(self):
+        """Test ensure_list wraps dictionary."""
+        data = {"key": "value"}
+        result = ensure_list(data)
+        assert result == [data]
+
+    def test_chunk_list_single_item(self):
+        """Test chunking single item."""
+        result = chunk_list([1], 5)
+        assert result == [[1]]
+
+    def test_chunk_list_large_chunk_size(self):
+        """Test chunk_list with chunk size larger than list."""
+        result = chunk_list([1, 2], 100)
+        assert len(result) == 1
+        assert result[0] == [1, 2]
+
+    def test_safe_get_first_level(self):
+        """Test safe_get with single level."""
+        data = {"key": "value"}
+        assert safe_get(data, "key") == "value"
+
+    def test_safe_get_deep_nesting(self):
+        """Test safe_get with deep nesting."""
+        data = {"a": {"b": {"c": {"d": 123}}}}
+        assert safe_get(data, "a", "b", "c", "d") == 123
+
+    def test_safe_get_with_none_value(self):
+        """Test safe_get when intermediate value is None."""
+        data = {"a": None}
+        assert safe_get(data, "a", "b", default=999) == 999
+
+    def test_safe_get_no_keys(self):
+        """Test safe_get with no keys."""
+        data = {"key": "value"}
+        result = safe_get(data)
+        assert result == data
+
+    def test_normalize_id_zero(self):
+        """Test normalize_id with zero."""
+        assert normalize_id(0) == "0"
+
+    def test_normalize_id_negative(self):
+        """Test normalize_id with negative number."""
+        assert normalize_id(-123) == "-123"
+
+    def test_parse_datetime_with_different_timezone(self):
+        """Test parse_datetime converts different timezone to UTC."""
+        # EST is UTC-5
+        result = parse_datetime("2024-01-15T10:00:00-05:00")
+        assert result is not None
+        assert result.tzinfo == timezone.utc
+        # 10:00 EST = 15:00 UTC
+        assert result.hour == 15
+
+    def test_parse_datetime_with_positive_offset(self):
+        """Test parse_datetime with positive timezone offset."""
+        # Tokyo is UTC+9
+        result = parse_datetime("2024-01-15T10:00:00+09:00")
+        assert result is not None
+        assert result.tzinfo == timezone.utc
+        # 10:00 JST = 01:00 UTC
+        assert result.hour == 1
+
+    def test_build_graphql_query_empty_fields(self):
+        """Test build_graphql_query with empty fields list."""
+        from producthuntdb.utils import build_graphql_query
+
+        query = build_graphql_query("posts", [])
+        assert "posts" in query
+
+    def test_build_graphql_query_single_variable(self):
+        """Test build_graphql_query with single variable."""
+        from producthuntdb.utils import build_graphql_query
+
+        query = build_graphql_query("posts", ["id"], {"$id": "ID!"})
+        assert "$id: ID!" in query
+
+    def test_chunk_list_uneven_split(self):
+        """Test chunk_list with uneven split."""
+        result = chunk_list([1, 2, 3, 4, 5], 2)
+        assert len(result) == 3
+        assert result[0] == [1, 2]
+        assert result[1] == [3, 4]
+        assert result[2] == [5]
+
+    def test_safe_get_with_int_value(self):
+        """Test safe_get when intermediate value is not a dict."""
+        data = {"a": 123}
+        assert safe_get(data, "a", "b", default=999) == 999
+
+    def test_safe_get_list_access(self):
+        """Test safe_get handles list incorrectly (not supported)."""
+        data = {"items": [1, 2, 3]}
+        # This will fail because lists don't have .get() method
+        # safe_get only works with dicts, not lists
+        assert safe_get(data, "items", default=999) == [1, 2, 3]
+
+    def test_normalize_id_large_number(self):
+        """Test normalize_id with large number."""
+        assert normalize_id(999999999) == "999999999"
+
+    def test_parse_datetime_microseconds(self):
+        """Test parse_datetime preserves microseconds."""
+        result = parse_datetime("2024-01-15T10:30:45.123456Z")
+        assert result is not None
+        assert result.microsecond == 123456
+
+    def test_parse_datetime_milliseconds(self):
+        """Test parse_datetime handles milliseconds."""
+        result = parse_datetime("2024-01-15T10:30:45.123Z")
+        assert result is not None
+        # .123 seconds = 123000 microseconds
+        assert result.microsecond == 123000
+
+    def test_redact_token_unicode(self):
+        """Test redact_token with unicode characters."""
+        token = "abc123你好世界xyz"
+        result = redact_token(token)
+        assert "***" in result or result.endswith("xyz")
+
+    def test_ensure_list_none_input(self):
+        """Test ensure_list with None input."""
+        assert ensure_list(None) == []
+
+    def test_ensure_list_tuple(self):
+        """Test ensure_list with tuple input."""
+        result = ensure_list((1, 2, 3))
+        assert result == [(1, 2, 3)]
+
+    def test_build_graphql_query_mutation(self):
+        """Test build_graphql_query for mutation."""
+        from producthuntdb.utils import build_graphql_query
+
+        query = build_graphql_query("createPost", ["id", "status"])
+        assert "createPost" in query
+        assert "id" in query
+        assert "status" in query
