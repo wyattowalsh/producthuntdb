@@ -266,7 +266,7 @@ lsof -ti:8000 | xargs kill -9
 ## References
 
 - [Root AGENTS.md](../AGENTS.md) - Project-wide conventions
-- [Sphinx documentation](https://www.sphinx-doc.org/) (observed: 2025-10-30)
-- [MyST Parser](https://myst-parser.readthedocs.io/) (observed: 2025-10-30)
-- [Shibuya theme](https://shibuya.lepture.com/) (observed: 2025-10-30)
-- [sphinx-autobuild](https://github.com/sphinx-doc/sphinx-autobuild) (observed: 2025-10-30)
+- [Sphinx documentation](https://www.sphinx-doc.org/) (observed: 2025-11-01)
+- [MyST Parser](https://myst-parser.readthedocs.io/) (observed: 2025-11-01)
+- [Shibuya theme](https://shibuya.lepture.com/) (observed: 2025-11-01)
+- [sphinx-autobuild](https://github.com/sphinx-doc/sphinx-autobuild) (observed: 2025-11-01)

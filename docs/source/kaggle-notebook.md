@@ -31,7 +31,7 @@ The ProductHuntDB Kaggle notebook (`notebooks/ProductHuntDB Notebook.ipynb`) pro
 1. **Upload** the notebook to Kaggle
 2. **Configure Secrets** in Notebook Settings → Add-ons → Secrets:
    - `PRODUCTHUNT_TOKEN` (required) - Get from [api.producthunt.com](https://api.producthunt.com/v2/oauth/applications)
-   - `KAGGLE_USERNAME`, `KAGGLE_KEY`, `KAGGLE_DATASET_SLUG` (optional, for publishing)
+   - `KAGGLE_USERNAME`, `KAGGLE_KEY` (optional, for publishing to `wyattowalsh/producthuntdb`)
 3. **First Run**: Uncomment `--full-refresh` in sync cell (2-4 hours)
 4. **Run all cells** to install, sync, and optionally publish
 5. **Schedule** the notebook for automatic daily updates (re-comment `--full-refresh`)
@@ -135,7 +135,8 @@ jupyter lab "ProductHuntDB Notebook.ipynb"
 
 - `KAGGLE_USERNAME` - Your Kaggle username
 - `KAGGLE_KEY` - Your Kaggle API key
-- `KAGGLE_DATASET_SLUG` - Dataset identifier (e.g., `username/dataset-name`)
+
+**Note**: The dataset slug is hardcoded as `wyattowalsh/producthuntdb` and does not need to be configured.
 
 ## Scheduling
 
@@ -245,10 +246,9 @@ This only fetches new data since the last run, making updates fast and efficient
 
 **Solution**:
 
-1. Verify all three secrets configured: `KAGGLE_USERNAME`, `KAGGLE_KEY`, `KAGGLE_DATASET_SLUG`
-2. Check dataset slug format: `username/dataset-name`
-3. Ensure you have write permissions for the dataset
-4. Verify dataset exists on Kaggle (create manually if needed)
+1. Verify all three secrets configured: `KAGGLE_USERNAME`, `KAGGLE_KEY`
+2. Ensure you have write permissions for the `wyattowalsh/producthuntdb` dataset
+3. Verify dataset exists on Kaggle (create manually if needed)
 
 ## Example Output
 

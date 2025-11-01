@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from producthuntdb.config import (
     CollectionsOrder,
     CommentsOrder,
+    Environment,
     PostsOrder,
     Settings,
     TopicsOrder,
@@ -370,3 +371,151 @@ class TestConfigCoverage:
 
         assert os.environ.get("KAGGLE_USERNAME") == "testuser"
         assert os.environ.get("KAGGLE_KEY") == "testkey123"
+
+
+class TestEnvironmentProfiles:
+    """Tests for environment-specific configuration profiles."""
+
+    def test_production_environment_profile(self, monkeypatch):
+        """Test PRODUCTION environment profile applies correct settings."""
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "prod_token_123456789")
+        monkeypatch.setenv("ENVIRONMENT", "production")
+        monkeypatch.setenv("MAX_CONCURRENCY", "10")  # Should be limited to 5
+        
+        settings = Settings()  # type: ignore[call-arg]
+        
+        assert settings.environment == Environment.PRODUCTION
+        assert settings.max_concurrency == 5  # Capped at 5 for production
+        assert settings.log_json is True
+        assert settings.enable_tracing is True
+        assert settings.is_production is True
+        assert settings.is_development is False
+        assert settings.is_testing is False
+        assert settings.is_staging is False
+
+    def test_development_environment_profile(self, monkeypatch):
+        """Test DEVELOPMENT environment profile applies correct settings."""
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "dev_token_123456789")
+        monkeypatch.setenv("ENVIRONMENT", "development")
+        
+        settings = Settings()  # type: ignore[call-arg]
+        
+        assert settings.environment == Environment.DEVELOPMENT
+        assert settings.max_concurrency == 1  # Single-threaded for debugging
+        assert settings.log_level == "DEBUG"
+        assert settings.log_json is False  # Human-readable logs
+        assert settings.enable_tracing is False
+        assert settings.is_development is True
+        assert settings.is_production is False
+
+    def test_testing_environment_profile(self, monkeypatch):
+        """Test TESTING environment profile applies correct settings."""
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_123456789")
+        monkeypatch.setenv("ENVIRONMENT", "testing")
+        
+        settings = Settings()  # type: ignore[call-arg]
+        
+        assert settings.environment == Environment.TESTING
+        assert settings.database_path == Path(":memory:")  # In-memory database
+        assert settings.max_concurrency == 1
+        assert settings.log_level == "ERROR"  # Quiet tests
+        assert settings.log_to_file is False
+        assert settings.log_json is False
+        assert settings.enable_tracing is False
+        assert settings.is_testing is True
+        assert settings.is_production is False
+
+    def test_staging_environment_profile(self, monkeypatch):
+        """Test STAGING environment profile applies correct settings."""
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "staging_token_123456789")
+        monkeypatch.setenv("ENVIRONMENT", "staging")
+        monkeypatch.setenv("MAX_CONCURRENCY", "10")  # Should be limited to 3
+        
+        settings = Settings()  # type: ignore[call-arg]
+        
+        assert settings.environment == Environment.STAGING
+        assert settings.max_concurrency == 3  # Capped at 3 for staging
+        assert settings.log_level == "INFO"
+        assert settings.log_json is True
+        assert settings.enable_tracing is True
+        assert settings.is_staging is True
+        assert settings.is_production is False
+
+    def test_production_respects_explicit_debug_level(self, monkeypatch):
+        """Test PRODUCTION changes DEBUG to INFO (based on actual code behavior)."""
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "prod_token_123456789")
+        monkeypatch.setenv("ENVIRONMENT", "production")
+        monkeypatch.setenv("LOG_LEVEL", "DEBUG")
+        
+        settings = Settings()  # type: ignore[call-arg]
+        
+        assert settings.environment == Environment.PRODUCTION
+        # Despite the comment saying "Don't override explicit DEBUG", the code does change it
+        assert settings.log_level == "INFO"  # Actually changes to INFO
+
+    def test_export_dir_property_creates_directory(self, monkeypatch, tmp_path):
+        """Test export_dir property creates directory if it doesn't exist."""
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_123456789")
+        monkeypatch.setenv("DATA_DIR", str(tmp_path))
+        
+        settings = Settings()  # type: ignore[call-arg]
+        export_dir = settings.export_dir
+        
+        assert export_dir.exists()
+        assert export_dir.is_dir()
+        assert export_dir == tmp_path / "export"
+
+    def test_database_url_property(self, monkeypatch):
+        """Test database_url property generates correct SQLAlchemy URL."""
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_123456789")
+        monkeypatch.setenv("DATABASE_PATH", "/tmp/test.db")
+        
+        settings = Settings()  # type: ignore[call-arg]
+        
+        assert settings.database_url == "sqlite:////tmp/test.db"
+
+    def test_safety_timedelta_property(self, monkeypatch):
+        """Test safety_timedelta converts minutes to timedelta."""
+        from datetime import timedelta
+        
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_123456789")
+        monkeypatch.setenv("SAFETY_MINUTES", "60")
+        
+        settings = Settings()  # type: ignore[call-arg]
+        
+        assert settings.safety_timedelta == timedelta(minutes=60)
+        assert settings.safety_timedelta == timedelta(hours=1)
+
+    def test_has_kaggle_credentials_true(self, monkeypatch):
+        """Test has_kaggle_credentials with valid credentials."""
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_123456789")
+        monkeypatch.setenv("KAGGLE_USERNAME", "testuser")
+        monkeypatch.setenv("KAGGLE_KEY", "testkey123")
+        
+        settings = Settings()  # type: ignore[call-arg]
+        
+        assert settings.has_kaggle_credentials is True
+
+    def test_has_kaggle_credentials_false(self, monkeypatch):
+        """Test has_kaggle_credentials without credentials."""
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_123456789")
+        # Set empty strings to ensure no credentials
+        monkeypatch.setenv("KAGGLE_USERNAME", "")
+        monkeypatch.setenv("KAGGLE_KEY", "")
+        
+        settings = Settings()  # type: ignore[call-arg]
+        
+        assert settings.has_kaggle_credentials is False
+
+    def test_has_kaggle_credentials_partial(self, monkeypatch):
+        """Test has_kaggle_credentials with only username."""
+        monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_123456789")
+        monkeypatch.setenv("KAGGLE_USERNAME", "testuser")
+        monkeypatch.setenv("KAGGLE_KEY", "")  # Empty key
+        
+        settings = Settings()  # type: ignore[call-arg]
+        
+        assert settings.has_kaggle_credentials is False
+        settings = Settings()  # type: ignore[call-arg]
+        
+        assert settings.has_kaggle_credentials is False

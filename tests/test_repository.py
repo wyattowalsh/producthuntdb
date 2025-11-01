@@ -18,7 +18,7 @@ from producthuntdb.repository import Repository, RepositoryFactory
 # =============================================================================
 
 
-class TestEntity(SQLModel, table=True):
+class EntityForTesting(SQLModel, table=True):
     """Test entity for repository tests."""
 
     __tablename__ = "test_entities"  # type: ignore[assignment]
@@ -62,14 +62,14 @@ def test_session(test_engine):
 
 @pytest.fixture
 def test_repo(test_session):
-    """Create a repository for TestEntity."""
-    return Repository[TestEntity](test_session, TestEntity)
+    """Create a repository for EntityForTesting."""
+    return Repository[EntityForTesting](test_session, EntityForTesting)
 
 
 @pytest.fixture
 def sample_entity():
     """Create a sample test entity."""
-    return TestEntity(id="test-1", name="Test Item", value=42, is_active=True)
+    return EntityForTesting(id="test-1", name="Test Item", value=42, is_active=True)
 
 
 # =============================================================================
@@ -79,9 +79,9 @@ def sample_entity():
 
 def test_repository_initialization(test_session):
     """Test repository can be initialized with session and model."""
-    repo = Repository[TestEntity](test_session, TestEntity)
+    repo = Repository[EntityForTesting](test_session, EntityForTesting)
     assert repo.session == test_session
-    assert repo.model == TestEntity
+    assert repo.model == EntityForTesting
 
 
 def test_repository_get_returns_none_when_not_found(test_repo):
@@ -113,7 +113,7 @@ def test_repository_get_all_returns_all_entities(test_repo):
     """Test get_all() returns all entities."""
     # Create multiple entities
     entities = [
-        TestEntity(id=f"test-{i}", name=f"Item {i}", value=i * 10)
+        EntityForTesting(id=f"test-{i}", name=f"Item {i}", value=i * 10)
         for i in range(5)
     ]
     for entity in entities:
@@ -122,14 +122,14 @@ def test_repository_get_all_returns_all_entities(test_repo):
     # Retrieve all
     results = test_repo.get_all()
     assert len(results) == 5
-    assert all(isinstance(r, TestEntity) for r in results)
+    assert all(isinstance(r, EntityForTesting) for r in results)
 
 
 def test_repository_get_all_with_limit(test_repo):
     """Test get_all() respects limit parameter."""
     # Create 10 entities
     for i in range(10):
-        test_repo.create(TestEntity(id=f"test-{i}", name=f"Item {i}", value=i))
+        test_repo.create(EntityForTesting(id=f"test-{i}", name=f"Item {i}", value=i))
 
     # Get only 3
     results = test_repo.get_all(limit=3)
@@ -140,7 +140,7 @@ def test_repository_get_all_with_offset(test_repo):
     """Test get_all() respects offset parameter."""
     # Create entities with predictable IDs
     for i in range(5):
-        test_repo.create(TestEntity(id=f"test-{i:02d}", name=f"Item {i}", value=i))
+        test_repo.create(EntityForTesting(id=f"test-{i:02d}", name=f"Item {i}", value=i))
 
     # Get second page (skip first 2)
     results = test_repo.get_all(limit=2, offset=2)
@@ -151,7 +151,7 @@ def test_repository_get_all_with_limit_and_offset(test_repo):
     """Test get_all() with both limit and offset."""
     # Create 20 entities
     for i in range(20):
-        test_repo.create(TestEntity(id=f"test-{i:03d}", name=f"Item {i}", value=i))
+        test_repo.create(EntityForTesting(id=f"test-{i:03d}", name=f"Item {i}", value=i))
 
     # Get page 3 (items 10-14)
     results = test_repo.get_all(limit=5, offset=10)
@@ -180,7 +180,7 @@ def test_repository_create_saves_entity(test_repo, sample_entity):
 
 def test_repository_create_returns_refreshed_entity(test_repo):
     """Test create() returns entity with database-generated values."""
-    entity = TestEntity(id="test-1", name="Test", value=100)
+    entity = EntityForTesting(id="test-1", name="Test", value=100)
     created = test_repo.create(entity)
 
     # Entity should be refreshed from database
@@ -236,9 +236,9 @@ def test_repository_delete_returns_false_when_not_found(test_repo):
 def test_repository_find_by_single_attribute(test_repo):
     """Test find_by() with single attribute filter."""
     # Create entities with different values
-    test_repo.create(TestEntity(id="test-1", name="Alice", value=10))
-    test_repo.create(TestEntity(id="test-2", name="Bob", value=20))
-    test_repo.create(TestEntity(id="test-3", name="Alice", value=30))
+    test_repo.create(EntityForTesting(id="test-1", name="Alice", value=10))
+    test_repo.create(EntityForTesting(id="test-2", name="Bob", value=20))
+    test_repo.create(EntityForTesting(id="test-3", name="Alice", value=30))
 
     # Find by name
     results = test_repo.find_by(name="Alice")
@@ -249,9 +249,9 @@ def test_repository_find_by_single_attribute(test_repo):
 def test_repository_find_by_multiple_attributes(test_repo):
     """Test find_by() with multiple attribute filters."""
     # Create entities
-    test_repo.create(TestEntity(id="test-1", name="Alice", value=10, is_active=True))
-    test_repo.create(TestEntity(id="test-2", name="Alice", value=10, is_active=False))
-    test_repo.create(TestEntity(id="test-3", name="Bob", value=10, is_active=True))
+    test_repo.create(EntityForTesting(id="test-1", name="Alice", value=10, is_active=True))
+    test_repo.create(EntityForTesting(id="test-2", name="Alice", value=10, is_active=False))
+    test_repo.create(EntityForTesting(id="test-3", name="Bob", value=10, is_active=True))
 
     # Find by multiple attributes
     results = test_repo.find_by(name="Alice", is_active=True)
@@ -261,7 +261,7 @@ def test_repository_find_by_multiple_attributes(test_repo):
 
 def test_repository_find_by_returns_empty_when_no_match(test_repo):
     """Test find_by() returns empty list when no entities match."""
-    test_repo.create(TestEntity(id="test-1", name="Alice", value=10))
+    test_repo.create(EntityForTesting(id="test-1", name="Alice", value=10))
 
     results = test_repo.find_by(name="NonExistent")
     assert len(results) == 0
@@ -269,7 +269,7 @@ def test_repository_find_by_returns_empty_when_no_match(test_repo):
 
 def test_repository_find_by_ignores_unknown_attributes(test_repo):
     """Test find_by() ignores attributes that don't exist on model."""
-    test_repo.create(TestEntity(id="test-1", name="Alice", value=10))
+    test_repo.create(EntityForTesting(id="test-1", name="Alice", value=10))
 
     # This should not raise an error
     results = test_repo.find_by(name="Alice", unknown_field="value")
@@ -286,7 +286,7 @@ def test_repository_count_returns_total(test_repo):
     """Test count() returns total number of entities."""
     # Create 7 entities
     for i in range(7):
-        test_repo.create(TestEntity(id=f"test-{i}", name=f"Item {i}", value=i))
+        test_repo.create(EntityForTesting(id=f"test-{i}", name=f"Item {i}", value=i))
 
     count = test_repo.count()
     assert count == 7
@@ -370,21 +370,21 @@ def test_repository_factory_initialization(test_session):
 def test_repository_factory_creates_repository_for_entity(test_session):
     """Test factory creates repository for specified entity type."""
     factory = RepositoryFactory(test_session)
-    repo = factory.for_entity(TestEntity)
+    repo = factory.for_entity(EntityForTesting)
 
     assert isinstance(repo, Repository)
     assert repo.session == test_session
-    assert repo.model == TestEntity
+    assert repo.model == EntityForTesting
 
 
 def test_repository_factory_creates_different_repositories(test_session):
     """Test factory can create repositories for different entity types."""
     factory = RepositoryFactory(test_session)
 
-    repo1 = factory.for_entity(TestEntity)
+    repo1 = factory.for_entity(EntityForTesting)
     repo2 = factory.for_entity(AnotherEntity)
 
-    assert repo1.model == TestEntity
+    assert repo1.model == EntityForTesting
     assert repo2.model == AnotherEntity
     assert repo1.session == repo2.session  # Share same session
 
@@ -397,11 +397,11 @@ def test_repository_factory_repositories_are_independent(test_session):
     factory = RepositoryFactory(test_session)
 
     # Create repositories
-    entity_repo = factory.for_entity(TestEntity)
+    entity_repo = factory.for_entity(EntityForTesting)
     another_repo = factory.for_entity(AnotherEntity)
 
     # Add data to each
-    entity_repo.create(TestEntity(id="test-1", name="Test", value=10))
+    entity_repo.create(EntityForTesting(id="test-1", name="Test", value=10))
     another_repo.create(AnotherEntity(id="another-1", title="Another", count=5))
 
     # Verify independence
@@ -422,19 +422,19 @@ def test_repository_preserves_type_information(test_repo, sample_entity):
     """Test repository operations preserve type information."""
     # Create
     created = test_repo.create(sample_entity)
-    assert isinstance(created, TestEntity)
+    assert isinstance(created, EntityForTesting)
 
     # Get
     retrieved = test_repo.get(created.id)
-    assert isinstance(retrieved, TestEntity)
+    assert isinstance(retrieved, EntityForTesting)
 
     # Get all
     all_entities = test_repo.get_all()
-    assert all(isinstance(e, TestEntity) for e in all_entities)
+    assert all(isinstance(e, EntityForTesting) for e in all_entities)
 
     # Update
     updated = test_repo.update(created)
-    assert isinstance(updated, TestEntity)
+    assert isinstance(updated, EntityForTesting)
 
 
 def test_repository_handles_multiple_entity_types(test_session):
@@ -443,24 +443,24 @@ def test_repository_handles_multiple_entity_types(test_session):
     SQLModel.metadata.create_all(test_session.get_bind())
 
     # Create repositories for different types
-    test_repo = Repository[TestEntity](test_session, TestEntity)
+    test_repo = Repository[EntityForTesting](test_session, EntityForTesting)
     another_repo = Repository[AnotherEntity](test_session, AnotherEntity)
 
     # Add data
-    test_entity = test_repo.create(TestEntity(id="t1", name="Test", value=10))
+    test_entity = test_repo.create(EntityForTesting(id="t1", name="Test", value=10))
     another_entity = another_repo.create(
         AnotherEntity(id="a1", title="Another", count=5)
     )
 
     # Verify types are preserved
-    assert isinstance(test_entity, TestEntity)
+    assert isinstance(test_entity, EntityForTesting)
     assert isinstance(another_entity, AnotherEntity)
 
     # Verify retrieval maintains types
     retrieved_test = test_repo.get("t1")
     retrieved_another = another_repo.get("a1")
 
-    assert isinstance(retrieved_test, TestEntity)
+    assert isinstance(retrieved_test, EntityForTesting)
     assert isinstance(retrieved_another, AnotherEntity)
 
 
@@ -502,8 +502,8 @@ def test_repository_update_persists_all_changes(test_repo, sample_entity):
 
 def test_repository_find_by_with_boolean_false(test_repo):
     """Test find_by() correctly handles boolean False values."""
-    test_repo.create(TestEntity(id="test-1", name="Active", is_active=True))
-    test_repo.create(TestEntity(id="test-2", name="Inactive", is_active=False))
+    test_repo.create(EntityForTesting(id="test-1", name="Active", is_active=True))
+    test_repo.create(EntityForTesting(id="test-2", name="Inactive", is_active=False))
 
     # Find inactive entities
     results = test_repo.find_by(is_active=False)
@@ -513,8 +513,8 @@ def test_repository_find_by_with_boolean_false(test_repo):
 
 def test_repository_find_by_with_zero_value(test_repo):
     """Test find_by() correctly handles zero values."""
-    test_repo.create(TestEntity(id="test-1", name="Zero", value=0))
-    test_repo.create(TestEntity(id="test-2", name="Ten", value=10))
+    test_repo.create(EntityForTesting(id="test-1", name="Zero", value=0))
+    test_repo.create(EntityForTesting(id="test-2", name="Ten", value=10))
 
     # Find entities with value=0
     results = test_repo.find_by(value=0)

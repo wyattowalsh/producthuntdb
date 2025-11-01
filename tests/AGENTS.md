@@ -215,5 +215,5 @@ Local test commands should match CI exactly.
 - [Root AGENTS.md](../AGENTS.md) - Project-wide conventions
 - [conftest.py](conftest.py) - All test fixtures and configuration
 - [pyproject.toml](../pyproject.toml) - Test configuration (`[tool.pytest.ini_options]`, `[tool.coverage]`)
-- [pytest documentation](https://docs.pytest.org/) (observed: 2025-10-30)
-- [pytest-asyncio](https://pytest-asyncio.readthedocs.io/) (observed: 2025-10-30)
+- [pytest documentation](https://docs.pytest.org/) (observed: 2025-11-01)
+- [pytest-asyncio](https://pytest-asyncio.readthedocs.io/) (observed: 2025-11-01)

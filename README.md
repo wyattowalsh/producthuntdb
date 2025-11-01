@@ -112,10 +112,9 @@ Create a `.env` file in the project root:
 # Product Hunt API
 PRODUCTHUNT_TOKEN=your_token_here
 
-# Kaggle Configuration (optional)
+# Kaggle Configuration (optional - for publishing to wyattowalsh/producthuntdb)
 KAGGLE_USERNAME=your_username
 KAGGLE_KEY=your_api_key
-KAGGLE_DATASET_SLUG=username/dataset-name
 
 # Operational Parameters (optional)
 MAX_CONCURRENCY=3
@@ -189,7 +188,6 @@ ProductHuntDB uses **Pydantic Settings** for configuration management, supportin
 | `PRODUCTHUNT_TOKEN` | ✅ Yes | — | Product Hunt API authentication token |
 | `KAGGLE_USERNAME` | ❌ No | — | Kaggle username for dataset publishing |
 | `KAGGLE_KEY` | ❌ No | — | Kaggle API key |
-| `KAGGLE_DATASET_SLUG` | ❌ No | `wyattowalsh/producthuntdb` | Dataset identifier (username/dataset-name) |
 | `GRAPHQL_ENDPOINT` | ❌ No | `https://api.producthunt.com/v2/api/graphql` | Product Hunt GraphQL endpoint |
 | `DATA_DIR` | ❌ No | `./data` | Base directory for all data files |
 | `DATABASE_PATH` | ❌ No | `./data/producthunt.db` | SQLite database file path (defaults to DATA_DIR/producthunt.db) |
@@ -604,7 +602,7 @@ uv run sphinx-autobuild source _build/html
 1. **Upload** `notebooks/ProductHuntDB Notebook.ipynb` to Kaggle
 2. **Configure Secrets** in Notebook Settings → Add-ons → Secrets:
    - `PRODUCTHUNT_TOKEN` (required) - Get from [api.producthunt.com](https://api.producthunt.com/v2/oauth/applications)
-   - `KAGGLE_USERNAME`, `KAGGLE_KEY`, `KAGGLE_DATASET_SLUG` (optional, for auto-publishing)
+   - `KAGGLE_USERNAME`, `KAGGLE_KEY` (optional, for publishing to `wyattowalsh/producthuntdb`)
 3. **Modify cell 9** to use: `!producthuntdb sync --full-refresh`
 4. **Run all cells** - Initial extraction takes 2-4 hours
 5. **Verify** - Check database status and exported CSVs

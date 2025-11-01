@@ -122,9 +122,10 @@ class Settings(BaseSettings):
         alias="KAGGLE_KEY",
         description="Kaggle API key for authentication",
     )
-    kaggle_dataset_slug: Optional[str] = Field(
+    kaggle_dataset_slug: str = Field(
         "wyattowalsh/producthuntdb",
-        description="Kaggle dataset identifier (username/dataset-name)",
+        description="Kaggle dataset identifier (hardcoded for this project)",
+        frozen=True,
     )
 
     # API Endpoints
@@ -310,11 +311,14 @@ class Settings(BaseSettings):
 
     @property
     def has_kaggle_credentials(self) -> bool:
-        """Check if Kaggle credentials are fully configured."""
-        return (
-            self.kaggle_username is not None
-            and self.kaggle_key is not None
-            and self.kaggle_dataset_slug is not None
+        """Check if Kaggle credentials are fully configured.
+        
+        Returns True only if both kaggle_username and kaggle_key are set
+        to non-empty strings.
+        """
+        return bool(
+            self.kaggle_username 
+            and self.kaggle_key
         )
 
     def redact_token(self, token: Optional[str] = None) -> str:
