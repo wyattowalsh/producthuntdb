@@ -49,10 +49,10 @@ test:
 
 test-cov:
 	@echo "Running full test suite with coverage (target: 90%+)..."
-	uv run pytest tests/ \
-		--ignore=tests/test_e2e.py \
-		--ignore=tests/test_integration.py \
-		--ignore=tests/test_pipeline.py \
+	uv run pytest tests/test_api_retry.py tests/test_config.py tests/test_models.py \
+		tests/test_logging.py tests/test_database.py tests/test_cli.py \
+		tests/test_utils.py tests/test_types.py tests/test_repository.py \
+		tests/test_metrics.py tests/test_simple_coverage.py \
 		--cov=producthuntdb \
 		--cov-report=term-missing \
 		--cov-report=html:logs/htmlcov \
