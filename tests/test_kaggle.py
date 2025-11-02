@@ -136,17 +136,20 @@ def test_export_database_handles_missing_table(kaggle_manager, tmp_path, monkeyp
     """Test export handles missing tables gracefully."""
     db_path = tmp_path / "producthunt.db"
     db_path.touch()
-    monkeypatch.setattr("producthuntdb.kaggle.settings.database_path", db_path)
-    monkeypatch.setattr("producthuntdb.kaggle.settings.database_url", f"sqlite:///{db_path}")
     
-    with patch("sqlalchemy.create_engine") as mock_engine:
-        with patch("pandas.read_sql_table") as mock_read_sql:
-            # Make read_sql_table raise an error for one table
-            mock_read_sql.side_effect = Exception("Table not found")
-            
-            output_dir = tmp_path / "output"
-            # Should not raise, just log warnings
-            kaggle_manager.export_database_to_csv(output_dir=output_dir)
+    with patch("producthuntdb.kaggle.settings") as mock_settings, \
+         patch("sqlalchemy.create_engine") as mock_engine, \
+         patch("pandas.read_sql_table") as mock_read_sql:
+        
+        mock_settings.database_path = db_path
+        mock_settings.database_url = f"sqlite:///{db_path}"
+        
+        # Make read_sql_table raise an error for one table
+        mock_read_sql.side_effect = Exception("Table not found")
+        
+        output_dir = tmp_path / "output"
+        # Should not raise, just log warnings
+        kaggle_manager.export_database_to_csv(output_dir=output_dir)
 
 
 # =============================================================================
@@ -230,7 +233,8 @@ def test_get_description_contains_markdown(kaggle_manager):
 
 def test_publish_dataset_no_slug(kaggle_manager, monkeypatch, capsys):
     """Test publish_dataset returns early if no dataset slug configured."""
-    monkeypatch.setattr("producthuntdb.kaggle.settings.kaggle_dataset_slug", None)
+    # Set dataset_slug to None directly on the manager
+    kaggle_manager.dataset_slug = None
     
     kaggle_manager.publish_dataset()
     
@@ -240,39 +244,34 @@ def test_publish_dataset_no_slug(kaggle_manager, monkeypatch, capsys):
 
 def test_publish_dataset_missing_credentials(kaggle_manager, monkeypatch):
     """Test publish_dataset handles missing Kaggle credentials."""
-    monkeypatch.setattr("producthuntdb.kaggle.settings.kaggle_dataset_slug", "user/dataset")
-    monkeypatch.setattr("producthuntdb.kaggle.settings.has_kaggle_credentials", lambda: False)
+    # Set has_kaggle to False directly on the manager
+    kaggle_manager.dataset_slug = "user/dataset"
+    kaggle_manager.has_kaggle = False
     
     # Should not raise, just log warning
     kaggle_manager.publish_dataset()
 
 
-def test_publish_dataset_success(kaggle_manager, monkeypatch):
+def test_publish_dataset_success(kaggle_manager, tmp_path, monkeypatch):
     """Test successful dataset publishing."""
-    monkeypatch.setattr("producthuntdb.kaggle.settings.kaggle_dataset_slug", "user/dataset")
-    monkeypatch.setattr(kaggle_manager, "has_kaggle", True)
-    monkeypatch.setattr(kaggle_manager, "dataset_slug", "user/dataset")
+    kaggle_manager.has_kaggle = True
+    kaggle_manager.dataset_slug = "user/dataset"
     
     # Mock the kaggle API
     mock_api = Mock()
     mock_api.dataset_status = Mock(side_effect=Exception("Not found"))  # Trigger create path
     mock_api.dataset_create_new = Mock()
     mock_api.authenticate = Mock()
-    monkeypatch.setattr(kaggle_manager, "api", mock_api)
+    kaggle_manager.api = mock_api
     
     # Create a temp data directory
-    data_dir = Path("/tmp/test_data")
-    data_dir.mkdir(exist_ok=True)
+    data_dir = tmp_path / "test_data"
+    data_dir.mkdir()
     
-    try:
-        kaggle_manager.publish_dataset(data_dir=data_dir)
-        
-        # Verify dataset was created
-        assert mock_api.dataset_create_new.called
-    finally:
-        # Cleanup
-        if data_dir.exists():
-            shutil.rmtree(data_dir)
+    kaggle_manager.publish_dataset(data_dir=data_dir)
+    
+    # Verify dataset was created
+    assert mock_api.dataset_create_new.called
 
 
 def test_publish_dataset_api_error(kaggle_manager, monkeypatch, tmp_path):
@@ -286,7 +285,7 @@ def test_publish_dataset_api_error(kaggle_manager, monkeypatch, tmp_path):
     monkeypatch.setattr(kaggle_manager, "api", mock_api)
     
     data_dir = tmp_path / "data"
-    data_dir.mkdir()
+    data_dir.mkdir(exist_ok=True)
     
     # Should raise the exception
     with pytest.raises(Exception):
@@ -304,7 +303,7 @@ def test_publish_dataset_with_version_notes(kaggle_manager, monkeypatch, tmp_pat
     monkeypatch.setattr(kaggle_manager, "api", mock_api)
     
     data_dir = tmp_path / "data"
-    data_dir.mkdir()
+    data_dir.mkdir(exist_ok=True)
     
     kaggle_manager.publish_dataset(data_dir=data_dir)
     
@@ -329,7 +328,7 @@ def test_full_export_and_publish_workflow(kaggle_manager, monkeypatch, tmp_path)
     mock_api.dataset_create_version = Mock()
     
     data_dir = tmp_path / "data"
-    data_dir.mkdir()
+    data_dir.mkdir(exist_ok=True)
     
     with patch("sqlalchemy.create_engine", return_value=mock_engine):
         with patch("pandas.read_sql_table") as mock_read_sql:
@@ -338,16 +337,18 @@ def test_full_export_and_publish_workflow(kaggle_manager, monkeypatch, tmp_path)
             mock_df.__len__ = Mock(return_value=5)
             mock_read_sql.return_value = mock_df
             
-            monkeypatch.setattr(kaggle_manager, "api", mock_api)
-            monkeypatch.setattr("producthuntdb.kaggle.settings.database_path", data_dir / "test.db")
+            kaggle_manager.api = mock_api
             
-            # Run workflow
-            kaggle_manager.export_database_to_csv(output_dir=data_dir)
-            kaggle_manager.publish_dataset(data_dir=data_dir)
-            
-            # Verify both steps executed
-            assert mock_df.to_csv.called
-            assert mock_api.dataset_create_version.called
+            with patch("producthuntdb.kaggle.settings") as mock_settings:
+                mock_settings.database_path = data_dir / "test.db"
+                
+                # Run workflow
+                kaggle_manager.export_database_to_csv(output_dir=data_dir)
+                kaggle_manager.publish_dataset(data_dir=data_dir)
+                
+                # Verify both steps executed
+                assert mock_df.to_csv.called
+                assert mock_api.dataset_create_version.called
 
 
 def test_export_path_configuration(tmp_path, monkeypatch):

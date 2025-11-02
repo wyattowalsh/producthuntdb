@@ -53,6 +53,7 @@ References:
 from __future__ import annotations
 
 import os
+from contextlib import contextmanager
 from typing import Any
 
 from opentelemetry import trace
@@ -341,6 +342,7 @@ def shutdown_telemetry() -> None:
         logger.info("Telemetry shut down successfully")
 
 
+@contextmanager
 def create_span_context(
     tracer: Tracer,
     span_name: str,

@@ -966,3 +966,5 @@ class TestIOAdditionalCoverage:
         assert db_topic.name == "Topic Updated"
         assert db_topic.description == "New description"
         assert db_topic.followersCount == 20
+
+

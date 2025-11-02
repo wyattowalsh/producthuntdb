@@ -409,10 +409,10 @@ class TestMigrationCommands:
         """Test migrate command."""
         monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_12345678")
 
-        with patch("producthuntdb.cli.subprocess.run") as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0, stdout="Migration created")
 
-            result = runner.invoke(app, ["migrate", "test_migration"])
+            result = runner.invoke(app, ["migrate", "--message", "test_migration"])
 
             assert result.exit_code == 0
 
@@ -420,7 +420,7 @@ class TestMigrationCommands:
         """Test upgrade command."""
         monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_12345678")
 
-        with patch("producthuntdb.cli.subprocess.run") as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
                 returncode=0, stdout="Upgraded to head"
             )
@@ -433,12 +433,12 @@ class TestMigrationCommands:
         """Test upgrade command with specific revision."""
         monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_12345678")
 
-        with patch("producthuntdb.cli.subprocess.run") as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
                 returncode=0, stdout="Upgraded to revision"
             )
 
-            result = runner.invoke(app, ["upgrade", "--revision", "abc123"])
+            result = runner.invoke(app, ["upgrade", "abc123"])
 
             assert result.exit_code == 0
 
@@ -446,7 +446,7 @@ class TestMigrationCommands:
         """Test downgrade command."""
         monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_12345678")
 
-        with patch("producthuntdb.cli.subprocess.run") as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
                 returncode=0, stdout="Downgraded to -1"
             )
@@ -459,12 +459,12 @@ class TestMigrationCommands:
         """Test downgrade command with specific revision."""
         monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_12345678")
 
-        with patch("producthuntdb.cli.subprocess.run") as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
                 returncode=0, stdout="Downgraded to revision"
             )
 
-            result = runner.invoke(app, ["downgrade", "--revision", "xyz789"])
+            result = runner.invoke(app, ["downgrade", "xyz789"])
 
             assert result.exit_code == 0
 
@@ -472,7 +472,7 @@ class TestMigrationCommands:
         """Test migration-history command."""
         monkeypatch.setenv("PRODUCTHUNT_TOKEN", "test_token_12345678")
 
-        with patch("producthuntdb.cli.subprocess.run") as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
                 returncode=0, stdout="Migration history"
             )

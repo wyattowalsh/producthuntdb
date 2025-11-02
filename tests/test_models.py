@@ -704,3 +704,5 @@ class TestModelsCoverage:
         post = Post(**post_data)
         assert post.media is None
 
+
+

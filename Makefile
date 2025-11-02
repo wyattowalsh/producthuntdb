@@ -52,7 +52,6 @@ test-cov:
 	uv run pytest tests/ \
 		--ignore=tests/test_e2e.py \
 		--ignore=tests/test_integration.py \
-		--ignore=tests/test_pipeline.py \
 		--cov=producthuntdb \
 		--cov-report=term-missing \
 		--cov-report=html:logs/htmlcov \

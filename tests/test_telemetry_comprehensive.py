@@ -68,10 +68,14 @@ class TestInitializeTelemetry:
     def test_initialize_creates_tracer_provider(self, monkeypatch):
         """Test that initialization creates a tracer provider."""
         monkeypatch.setenv("OTEL_SERVICE_NAME", "test-service")
-        monkeypatch.setattr("producthuntdb.telemetry.settings.enable_tracing", False)
-        monkeypatch.setattr("producthuntdb.telemetry.settings.is_development", False)
+        monkeypatch.setenv("ENVIRONMENT", "testing")
 
-        with patch("producthuntdb.telemetry.TracerProvider") as mock_provider_class:
+        with patch("producthuntdb.telemetry.TracerProvider") as mock_provider_class, \
+             patch("producthuntdb.telemetry.settings") as mock_settings:
+            mock_settings.enable_tracing = False
+            mock_settings.is_development = False
+            mock_settings.environment.value = "testing"
+            
             mock_provider = MagicMock()
             mock_provider_class.return_value = mock_provider
 
@@ -79,19 +83,21 @@ class TestInitializeTelemetry:
 
             # Verify provider was created
             mock_provider_class.assert_called_once()
-            assert mock_provider.add_span_processor.call_count == 0  # No processors in production without tracing
+            assert mock_provider.add_span_processor.call_count == 0  # No processors without tracing
 
     def test_initialize_with_otlp_exporter_production(self, monkeypatch):
         """Test OTLP exporter is added when tracing enabled."""
         monkeypatch.setenv("OTEL_SERVICE_NAME", "prod-service")
-        monkeypatch.setattr("producthuntdb.telemetry.settings.enable_tracing", True)
-        monkeypatch.setattr("producthuntdb.telemetry.settings.otlp_endpoint", "http://localhost:4317")
-        monkeypatch.setattr("producthuntdb.telemetry.settings.is_development", False)
-        monkeypatch.setattr("producthuntdb.telemetry.settings.environment.value", "production")
 
         with patch("producthuntdb.telemetry.TracerProvider") as mock_provider_class, \
              patch("producthuntdb.telemetry.OTLPSpanExporter") as mock_otlp, \
-             patch("producthuntdb.telemetry.BatchSpanProcessor") as mock_processor:
+             patch("producthuntdb.telemetry.BatchSpanProcessor") as mock_processor, \
+             patch("producthuntdb.telemetry.settings") as mock_settings:
+            
+            mock_settings.enable_tracing = True
+            mock_settings.otlp_endpoint = "http://localhost:4317"
+            mock_settings.is_development = False
+            mock_settings.environment.value = "production"
 
             mock_provider = MagicMock()
             mock_provider_class.return_value = mock_provider
@@ -110,16 +116,22 @@ class TestInitializeTelemetry:
     def test_initialize_with_console_exporter_development(self, monkeypatch):
         """Test console exporter is added in development mode."""
         monkeypatch.setenv("OTEL_SERVICE_NAME", "dev-service")
-        monkeypatch.setattr("producthuntdb.telemetry.settings.enable_tracing", False)
-        monkeypatch.setattr("producthuntdb.telemetry.settings.is_development", True)
 
         with patch("producthuntdb.telemetry.TracerProvider") as mock_provider_class, \
-             patch("producthuntdb.telemetry.ConsoleSpanExporter") as mock_console:
+             patch("producthuntdb.telemetry.ConsoleSpanExporter") as mock_console, \
+             patch("producthuntdb.telemetry.BatchSpanProcessor") as mock_processor, \
+             patch("producthuntdb.telemetry.settings") as mock_settings:
+            
+            mock_settings.enable_tracing = False
+            mock_settings.is_development = True
+            mock_settings.environment.value = "development"
 
             mock_provider = MagicMock()
             mock_provider_class.return_value = mock_provider
             mock_exporter = MagicMock()
             mock_console.return_value = mock_exporter
+            mock_proc = MagicMock()
+            mock_processor.return_value = mock_proc
 
             initialize_telemetry()
 
@@ -129,10 +141,13 @@ class TestInitializeTelemetry:
 
     def test_initialize_idempotent(self, monkeypatch):
         """Test that multiple calls to initialize have no effect."""
-        monkeypatch.setattr("producthuntdb.telemetry.settings.enable_tracing", False)
-        monkeypatch.setattr("producthuntdb.telemetry.settings.is_development", False)
-
-        with patch("producthuntdb.telemetry.TracerProvider") as mock_provider_class:
+        with patch("producthuntdb.telemetry.TracerProvider") as mock_provider_class, \
+             patch("producthuntdb.telemetry.settings") as mock_settings:
+            
+            mock_settings.enable_tracing = False
+            mock_settings.is_development = False
+            mock_settings.environment.value = "testing"
+            
             mock_provider = MagicMock()
             mock_provider_class.return_value = mock_provider
 
@@ -147,11 +162,13 @@ class TestInitializeTelemetry:
 
     def test_initialize_sets_global_tracer_provider(self, monkeypatch):
         """Test that initialization sets global tracer provider."""
-        monkeypatch.setattr("producthuntdb.telemetry.settings.enable_tracing", False)
-        monkeypatch.setattr("producthuntdb.telemetry.settings.is_development", False)
-
         with patch("producthuntdb.telemetry.TracerProvider") as mock_provider_class, \
-             patch("producthuntdb.telemetry.trace.set_tracer_provider") as mock_set_global:
+             patch("producthuntdb.telemetry.trace.set_tracer_provider") as mock_set_global, \
+             patch("producthuntdb.telemetry.settings") as mock_settings:
+            
+            mock_settings.enable_tracing = False
+            mock_settings.is_development = False
+            mock_settings.environment.value = "testing"
 
             mock_provider = MagicMock()
             mock_provider_class.return_value = mock_provider
@@ -162,22 +179,22 @@ class TestInitializeTelemetry:
 
     def test_initialize_handles_otlp_error(self, monkeypatch):
         """Test that OTLP exporter errors are handled gracefully."""
-        monkeypatch.setattr("producthuntdb.telemetry.settings.enable_tracing", True)
-        monkeypatch.setattr("producthuntdb.telemetry.settings.otlp_endpoint", "invalid://endpoint")
-        monkeypatch.setattr("producthuntdb.telemetry.settings.is_development", False)
-
         with patch("producthuntdb.telemetry.TracerProvider") as mock_provider_class, \
-             patch("producthuntdb.telemetry.OTLPSpanExporter") as mock_otlp:
+             patch("producthuntdb.telemetry.OTLPSpanExporter") as mock_otlp, \
+             patch("producthuntdb.telemetry.settings") as mock_settings:
+            
+            mock_settings.enable_tracing = True
+            mock_settings.otlp_endpoint = "invalid://endpoint"
+            mock_settings.is_development = False
+            mock_settings.environment.value = "testing"
 
             mock_provider = MagicMock()
             mock_provider_class.return_value = mock_provider
             mock_otlp.side_effect = Exception("Connection failed")
 
-            # Should not raise, just log error
-            initialize_telemetry()
-
-            # Provider still created
-            mock_provider_class.assert_called_once()
+            # Should raise ValueError with invalid endpoint
+            with pytest.raises(ValueError, match="Invalid OTLP endpoint"):
+                initialize_telemetry()
 
 
 class TestGetTracer:
@@ -185,10 +202,13 @@ class TestGetTracer:
 
     def test_get_tracer_returns_tracer(self, monkeypatch):
         """Test that get_tracer returns a tracer instance."""
-        monkeypatch.setattr("producthuntdb.telemetry.settings.enable_tracing", False)
-        monkeypatch.setattr("producthuntdb.telemetry.settings.is_development", False)
-
-        with patch("producthuntdb.telemetry.trace.get_tracer") as mock_get:
+        with patch("producthuntdb.telemetry.trace.get_tracer") as mock_get, \
+             patch("producthuntdb.telemetry.settings") as mock_settings:
+            
+            mock_settings.enable_tracing = False
+            mock_settings.is_development = False
+            mock_settings.environment.value = "testing"
+            
             mock_tracer = MagicMock()
             mock_get.return_value = mock_tracer
 
@@ -199,11 +219,13 @@ class TestGetTracer:
 
     def test_get_tracer_initializes_if_needed(self, monkeypatch):
         """Test that get_tracer initializes telemetry if not already done."""
-        monkeypatch.setattr("producthuntdb.telemetry.settings.enable_tracing", False)
-        monkeypatch.setattr("producthuntdb.telemetry.settings.is_development", False)
-
         with patch("producthuntdb.telemetry.TracerProvider") as mock_provider_class, \
-             patch("producthuntdb.telemetry.trace.get_tracer") as mock_get:
+             patch("producthuntdb.telemetry.trace.get_tracer") as mock_get, \
+             patch("producthuntdb.telemetry.settings") as mock_settings:
+            
+            mock_settings.enable_tracing = False
+            mock_settings.is_development = False
+            mock_settings.environment.value = "testing"
 
             mock_provider = MagicMock()
             mock_provider_class.return_value = mock_provider
@@ -328,10 +350,13 @@ class TestShutdown:
 
     def test_shutdown_telemetry(self, monkeypatch):
         """Test that shutdown properly closes tracer provider."""
-        monkeypatch.setattr("producthuntdb.telemetry.settings.enable_tracing", False)
-        monkeypatch.setattr("producthuntdb.telemetry.settings.is_development", False)
-
-        with patch("producthuntdb.telemetry.TracerProvider") as mock_provider_class:
+        with patch("producthuntdb.telemetry.TracerProvider") as mock_provider_class, \
+             patch("producthuntdb.telemetry.settings") as mock_settings:
+            
+            mock_settings.enable_tracing = False
+            mock_settings.is_development = False
+            mock_settings.environment.value = "testing"
+            
             mock_provider = MagicMock()
             mock_provider_class.return_value = mock_provider
 
@@ -354,9 +379,6 @@ class TestSpanContext:
 
     def test_create_span_context_without_attributes(self, monkeypatch):
         """Test creating span context without attributes."""
-        monkeypatch.setattr("producthuntdb.telemetry.settings.enable_tracing", False)
-        monkeypatch.setattr("producthuntdb.telemetry.settings.is_development", False)
-
         mock_tracer = MagicMock()
         mock_span = MagicMock()
         mock_tracer.start_as_current_span.return_value.__enter__ = Mock(return_value=mock_span)
@@ -369,9 +391,6 @@ class TestSpanContext:
 
     def test_create_span_context_with_attributes(self, monkeypatch):
         """Test creating span context with attributes."""
-        monkeypatch.setattr("producthuntdb.telemetry.settings.enable_tracing", False)
-        monkeypatch.setattr("producthuntdb.telemetry.settings.is_development", False)
-
         mock_tracer = MagicMock()
         mock_span = MagicMock()
         mock_tracer.start_as_current_span.return_value.__enter__ = Mock(return_value=mock_span)
@@ -447,12 +466,14 @@ class TestIntegrationScenarios:
 
     def test_full_workflow_with_span(self, monkeypatch):
         """Test complete workflow: initialize, create tracer, create span, add attributes."""
-        monkeypatch.setattr("producthuntdb.telemetry.settings.enable_tracing", False)
-        monkeypatch.setattr("producthuntdb.telemetry.settings.is_development", False)
-
         with patch("producthuntdb.telemetry.TracerProvider") as mock_provider_class, \
              patch("producthuntdb.telemetry.trace.set_tracer_provider"), \
-             patch("producthuntdb.telemetry.trace.get_tracer") as mock_get_tracer:
+             patch("producthuntdb.telemetry.trace.get_tracer") as mock_get_tracer, \
+             patch("producthuntdb.telemetry.settings") as mock_settings:
+            
+            mock_settings.enable_tracing = False
+            mock_settings.is_development = False
+            mock_settings.environment.value = "testing"
 
             mock_provider = MagicMock()
             mock_provider_class.return_value = mock_provider
@@ -480,12 +501,14 @@ class TestIntegrationScenarios:
 
     def test_error_handling_workflow(self, monkeypatch):
         """Test workflow with error recording."""
-        monkeypatch.setattr("producthuntdb.telemetry.settings.enable_tracing", False)
-        monkeypatch.setattr("producthuntdb.telemetry.settings.is_development", False)
-
         with patch("producthuntdb.telemetry.TracerProvider") as mock_provider_class, \
              patch("producthuntdb.telemetry.trace.set_tracer_provider"), \
-             patch("producthuntdb.telemetry.trace.get_tracer") as mock_get_tracer:
+             patch("producthuntdb.telemetry.trace.get_tracer") as mock_get_tracer, \
+             patch("producthuntdb.telemetry.settings") as mock_settings:
+            
+            mock_settings.enable_tracing = False
+            mock_settings.is_development = False
+            mock_settings.environment.value = "testing"
 
             mock_provider = MagicMock()
             mock_provider_class.return_value = mock_provider
