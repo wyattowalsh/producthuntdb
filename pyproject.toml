@@ -138,7 +138,7 @@ markers = [
 ]
 
 # pytest CLI defaults
-addopts = "--import-mode=importlib --verbose --strict-markers --cov=producthuntdb --cov-report=html --cov-report=term-missing --cov-report=xml --cov-branch --cov-fail-under=88 --emoji --instafail --tb=short"
+addopts = "--import-mode=importlib --verbose --strict-markers --cov=producthuntdb --cov-report=html --cov-report=term-missing --cov-report=xml --cov-branch --cov-fail-under=88 --emoji --instafail --tb=short -n auto"
 
 # asyncio & warnings
 asyncio_mode = "auto"
@@ -157,7 +157,7 @@ log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 timeout        = 300
 timeout_method = "thread"
 
-# note: xdist parallelism (`-n auto`) can be added ad-hoc in CI
+# Parallel execution enabled by default with auto-detected worker count
 
 # ----------------------------
 # coverage.py config (.coveragerc -> pyproject)
