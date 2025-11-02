@@ -508,7 +508,7 @@ valid_usernames = st.text(
 )
 
 # Valid URLs
-valid_urls = st.just("https://producthunt.com/") + valid_ids
+valid_urls = valid_ids.map(lambda id: f"https://producthunt.com/{id}")
 
 # Valid datetimes as ISO 8601 strings
 valid_datetime_strings = st.datetimes(
