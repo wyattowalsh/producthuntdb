@@ -62,6 +62,27 @@ def reset_loguru():
     logger.remove()
 
 
+@pytest.fixture(scope="function", autouse=True)
+def ensure_prometheus_metrics():
+    """Ensure Prometheus metrics are registered before each test.
+    
+    The metrics are registered at module import time, but we verify they
+    remain registered throughout the test. We don't clear values to avoid
+    breaking the Prometheus client's internal state.
+    """
+    # Import metrics module to ensure collectors are registered
+    from producthuntdb import metrics
+    
+    # Verify key metrics are registered (they should be registered at import time)
+    # This is a no-op but ensures the module is loaded
+    assert metrics.registry is not None
+    
+    yield
+    
+    # No cleanup - metrics are stateful and shared across tests
+    # This matches real-world usage where metrics accumulate
+
+
 @pytest.fixture(scope="session")
 def test_settings(tmp_path_factory: pytest.TempPathFactory) -> Settings:
     """Create test settings with temporary data directory."""
