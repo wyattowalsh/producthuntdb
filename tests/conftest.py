@@ -490,3 +490,56 @@ def mock_kaggle_api(mocker):
     mocker.patch("kaggle.api", mock_api)
     return mock_api
 
+
+# =============================================================================
+# Hypothesis Custom Strategies
+# =============================================================================
+
+from hypothesis import strategies as st
+
+# Valid IDs (non-empty strings with reasonable length)
+valid_ids = st.text(min_size=1, max_size=50, alphabet=st.characters(blacklist_categories=("Cs",)))
+
+# Valid usernames (alphanumeric with underscores)
+valid_usernames = st.text(
+    min_size=1,
+    max_size=30,
+    alphabet=st.characters(whitelist_categories=("L", "N"), whitelist_characters="_-"),
+)
+
+# Valid URLs
+valid_urls = st.just("https://producthunt.com/") + valid_ids
+
+# Valid datetimes as ISO 8601 strings
+valid_datetime_strings = st.datetimes(
+    min_value=datetime(2013, 1, 1, tzinfo=timezone.utc),
+    max_value=datetime(2030, 12, 31, tzinfo=timezone.utc),
+).map(lambda dt: dt.isoformat())
+
+# Valid user data strategy
+@st.composite
+def user_data_strategy(draw):
+    """Generate valid user API response data."""
+    user_id = draw(valid_ids)
+    return {
+        "id": user_id,
+        "username": draw(valid_usernames),
+        "name": draw(st.text(min_size=1, max_size=100)),
+        "headline": draw(st.text(max_size=200) | st.none()),
+        "url": draw(valid_urls),
+        "createdAt": draw(valid_datetime_strings | st.none()),
+    }
+
+
+# Valid topic data strategy
+@st.composite
+def topic_data_strategy(draw):
+    """Generate valid topic API response data."""
+    return {
+        "id": draw(valid_ids),
+        "name": draw(st.text(min_size=1, max_size=100)),
+        "slug": draw(valid_usernames),
+        "followersCount": draw(st.integers(min_value=0, max_value=1000000)),
+        "url": draw(valid_urls | st.none()),
+    }
+
