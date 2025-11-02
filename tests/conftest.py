@@ -9,6 +9,7 @@ from typing import Any, Generator
 from unittest.mock import MagicMock
 
 import pytest
+from hypothesis import HealthCheck, Phase, Verbosity, settings
 from loguru import logger
 from sqlmodel import Session, SQLModel, create_engine
 
@@ -22,6 +23,40 @@ from producthuntdb.models import (
     UserRow,
     VoteRow,
 )
+
+
+# =============================================================================
+# Hypothesis Configuration
+# =============================================================================
+
+# Configure Hypothesis settings with tiered example counts
+settings.register_profile(
+    "default",
+    max_examples=100,  # Standard complexity
+    deadline=5000,  # 5 second timeout per example
+    suppress_health_check=[HealthCheck.too_slow],
+)
+
+settings.register_profile(
+    "simple",
+    max_examples=50,  # Simple functions
+    deadline=2000,
+)
+
+settings.register_profile(
+    "complex",
+    max_examples=200,  # Complex transformations
+    deadline=10000,
+)
+
+settings.register_profile(
+    "critical",
+    max_examples=500,  # Critical security/data integrity
+    deadline=15000,
+)
+
+# Use default profile
+settings.load_profile("default")
 
 
 # =============================================================================
