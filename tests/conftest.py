@@ -9,6 +9,7 @@ from typing import Any, Generator
 from unittest.mock import MagicMock
 
 import pytest
+from hypothesis import HealthCheck, Phase, Verbosity, settings
 from loguru import logger
 from sqlmodel import Session, SQLModel, create_engine
 
@@ -22,6 +23,40 @@ from producthuntdb.models import (
     UserRow,
     VoteRow,
 )
+
+
+# =============================================================================
+# Hypothesis Configuration
+# =============================================================================
+
+# Configure Hypothesis settings with tiered example counts
+settings.register_profile(
+    "default",
+    max_examples=100,  # Standard complexity
+    deadline=5000,  # 5 second timeout per example
+    suppress_health_check=[HealthCheck.too_slow],
+)
+
+settings.register_profile(
+    "simple",
+    max_examples=50,  # Simple functions
+    deadline=2000,
+)
+
+settings.register_profile(
+    "complex",
+    max_examples=200,  # Complex transformations
+    deadline=10000,
+)
+
+settings.register_profile(
+    "critical",
+    max_examples=500,  # Critical security/data integrity
+    deadline=15000,
+)
+
+# Use default profile
+settings.load_profile("default")
 
 
 # =============================================================================
@@ -60,6 +95,27 @@ def reset_loguru():
     yield
     # Clean up after test
     logger.remove()
+
+
+@pytest.fixture(scope="function", autouse=True)
+def ensure_prometheus_metrics():
+    """Ensure Prometheus metrics are registered before each test.
+    
+    The metrics are registered at module import time, but we verify they
+    remain registered throughout the test. We don't clear values to avoid
+    breaking the Prometheus client's internal state.
+    """
+    # Import metrics module to ensure collectors are registered
+    from producthuntdb import metrics
+    
+    # Verify key metrics are registered (they should be registered at import time)
+    # This is a no-op but ensures the module is loaded
+    assert metrics.registry is not None
+    
+    yield
+    
+    # No cleanup - metrics are stateful and shared across tests
+    # This matches real-world usage where metrics accumulate
 
 
 @pytest.fixture(scope="session")
@@ -433,4 +489,57 @@ def mock_kaggle_api(mocker):
     mock_api.dataset_status.return_value = {"status": "ok"}
     mocker.patch("kaggle.api", mock_api)
     return mock_api
+
+
+# =============================================================================
+# Hypothesis Custom Strategies
+# =============================================================================
+
+from hypothesis import strategies as st
+
+# Valid IDs (non-empty strings with reasonable length)
+valid_ids = st.text(min_size=1, max_size=50, alphabet=st.characters(blacklist_categories=("Cs",)))
+
+# Valid usernames (alphanumeric with underscores)
+valid_usernames = st.text(
+    min_size=1,
+    max_size=30,
+    alphabet=st.characters(whitelist_categories=("L", "N"), whitelist_characters="_-"),
+)
+
+# Valid URLs
+valid_urls = valid_ids.map(lambda id: f"https://producthunt.com/{id}")
+
+# Valid datetimes as ISO 8601 strings
+valid_datetime_strings = st.datetimes(
+    min_value=datetime(2013, 1, 1, tzinfo=timezone.utc),
+    max_value=datetime(2030, 12, 31, tzinfo=timezone.utc),
+).map(lambda dt: dt.isoformat())
+
+# Valid user data strategy
+@st.composite
+def user_data_strategy(draw):
+    """Generate valid user API response data."""
+    user_id = draw(valid_ids)
+    return {
+        "id": user_id,
+        "username": draw(valid_usernames),
+        "name": draw(st.text(min_size=1, max_size=100)),
+        "headline": draw(st.text(max_size=200) | st.none()),
+        "url": draw(valid_urls),
+        "createdAt": draw(valid_datetime_strings | st.none()),
+    }
+
+
+# Valid topic data strategy
+@st.composite
+def topic_data_strategy(draw):
+    """Generate valid topic API response data."""
+    return {
+        "id": draw(valid_ids),
+        "name": draw(st.text(min_size=1, max_size=100)),
+        "slug": draw(valid_usernames),
+        "followersCount": draw(st.integers(min_value=0, max_value=1000000)),
+        "url": draw(valid_urls | st.none()),
+    }
 

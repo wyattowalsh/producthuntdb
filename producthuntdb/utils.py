@@ -36,13 +36,17 @@ def parse_datetime(value: str | datetime | None) -> datetime | None:
             value = value.replace(tzinfo=UTC)
         return value.astimezone(UTC)
 
-    dt = dateutil_parser.isoparse(value)
+    try:
+        dt = dateutil_parser.isoparse(value)
 
-    # Ensure timezone-aware in UTC
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=UTC)
+        # Ensure timezone-aware in UTC
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=UTC)
 
-    return dt.astimezone(UTC)
+        return dt.astimezone(UTC)
+    except (ValueError, TypeError):
+        # Invalid datetime string, return None
+        return None
 
 
 def utc_now() -> datetime:
