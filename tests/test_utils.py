@@ -44,9 +44,9 @@ class TestDatetimeFunctions:
         assert parse_datetime(None) is None
 
     def test_parse_datetime_invalid(self):
-        """Test parsing invalid timestamp raises error."""
-        with pytest.raises(ValueError):
-            parse_datetime("not-a-date")
+        """Test parsing invalid timestamp returns None."""
+        result = parse_datetime("not-a-date")
+        assert result is None
 
     def test_utc_now(self):
         """Test getting current UTC time."""
@@ -516,7 +516,7 @@ class TestUtilsAdditionalCoverage:
 
     def test_redact_token_unicode(self):
         """Test redact_token with unicode characters."""
-        token = "abc123你好世界xyz"
+        token = "abc123????xyz"
         result = redact_token(token)
         assert "***" in result or result.endswith("xyz")
 

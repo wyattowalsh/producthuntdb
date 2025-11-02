@@ -812,3 +812,60 @@ class TestPipelineEdgeCases:
         stats = await pipeline.sync_collections()
 
         assert stats["collections"] == 0
+
+    def test_get_safety_cutoff_invalid_timestamp(self):
+        """Test safety cutoff with invalid timestamp string."""
+        pipeline = DataPipeline()
+
+        # Invalid timestamp should return None
+        cutoff = pipeline._get_safety_cutoff("invalid-timestamp")
+        assert cutoff is None
+
+    @pytest.mark.asyncio
+    async def test_sync_posts_with_validation_error(self, mocker):
+        """Test sync_posts handles validation errors gracefully."""
+        pipeline = DataPipeline()
+        await pipeline.initialize()
+
+        try:
+            # Mock post with invalid data that will cause validation error
+            mock_invalid_post = {
+                "id": "post_invalid",
+                # Missing required fields to trigger validation error
+            }
+
+            mock_response = {
+                "nodes": [mock_invalid_post],
+                "pageInfo": {"hasNextPage": False, "endCursor": "cursor123"},
+            }
+
+            mocker.patch.object(
+                pipeline.client,
+                "fetch_posts_page",
+                AsyncMock(return_value=mock_response),
+            )
+
+            stats = await pipeline.sync_posts(max_pages=1)
+
+            # Should skip invalid posts
+            assert stats["skipped"] >= 1
+
+        finally:
+            pipeline.close()
+
+    @pytest.mark.asyncio
+    async def test_verify_authentication_exception(self, mocker):
+        """Test authentication with API exception."""
+        pipeline = DataPipeline()
+        await pipeline.initialize()
+
+        mocker.patch.object(
+            pipeline.client,
+            "fetch_viewer",
+            AsyncMock(side_effect=RuntimeError("API Error")),
+        )
+
+        with pytest.raises(RuntimeError, match="API Error"):
+            await pipeline.verify_authentication()
+
+        pipeline.close()

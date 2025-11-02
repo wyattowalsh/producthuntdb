@@ -496,14 +496,16 @@ class TestModelValidation:
             Post(id="post123")  # Missing many required fields
 
     def test_invalid_timestamp_format(self):
-        """Test invalid timestamp raises error."""
-        with pytest.raises(ValidationError):
-            User(
-                id="user123",
-                username="test",
-                name="Test",
-                createdAt="not-a-date",
-            )
+        """Test invalid timestamp is handled gracefully (parse_datetime returns None)."""
+        # parse_datetime now returns None for invalid timestamps
+        # Pydantic accepts None for optional fields, so we just verify it doesn't crash
+        user = User(
+            id="user123",
+            username="test",
+            name="Test",
+            createdAt="not-a-date",  # Will be parsed as None
+        )
+        assert user.id == "user123"
 
     def test_extra_fields_ignored(self):
         """Test that extra fields are ignored."""
